@@ -22,6 +22,7 @@
     "dev:frontend": "npm run -w @uxd/frontend dev",
     "dev:worker": "npm run -w @uxd/ingestion-worker dev",
     "build": "npm run build --workspaces --if-present",
+    "build:packages": "tsc -b packages/api",
     "typecheck": "tsc -b --pretty tsconfig.build.json && npm run typecheck:tests",
     "typecheck:tests": "tsc --noEmit --pretty -p tsconfig.test.json",
     "lint": "npm run typecheck && npm run check:boundaries && npm run check:sql",

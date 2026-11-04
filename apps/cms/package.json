@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --port 3000",
+    "prebuild": "npm --prefix ../.. run build:packages",
     "build": "next build",
     "start": "next start --port 3000",
     "typecheck": "tsc --noEmit"
@@ -29,10 +30,12 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "^24.10.1",
     "@types/papaparse": "5.5.2",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.6",
     "postcss": "8.5.27",
-    "tailwindcss": "4.3.3"
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3"
   }
 }

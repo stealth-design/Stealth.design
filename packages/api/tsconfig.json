@@ -13,6 +13,7 @@
     { "path": "../database" },
     { "path": "../auth" },
     { "path": "../media" },
-    { "path": "../classification" }
+    { "path": "../classification" },
+    { "path": "../crawler" }
   ]
 }
