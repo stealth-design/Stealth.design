@@ -26,11 +26,14 @@ function scrub(text: string): string {
 }
 
 function describe(error: unknown) {
-  const e = error as { name?: string; code?: string; message?: string; issues?: unknown };
+  const e = error as { name?: string; code?: string; message?: string; stack?: string; cause?: unknown };
+  const cause = e?.cause as { name?: string; code?: string; message?: string } | undefined;
   return {
     name: e?.name ?? "Error",
     code: e?.code ?? null,
     message: scrub(String(e?.message ?? error)),
+    cause: cause ? scrub(`${cause.name ?? ""} ${cause.code ?? ""} ${cause.message ?? ""}`) : null,
+    where: (e?.stack ?? "").split("\n").slice(1, 7).map((line) => scrub(line.trim())),
   };
 }
 
@@ -110,6 +113,27 @@ export async function GET(request: Request): Promise<Response> {
     report.storage = describe(error);
   }
 
-  const healthy = report.settings === "ok" && report.database === "connected" && String(report.storage).startsWith("ok");
+  // 4. The CMS's real startup, as every page runs it.
+  try {
+    const server = await import("@/lib/server");
+    const db = await server.getDb();
+    await db.execute(sql`select 1`);
+    await server.getBaseContext();
+    report.cmsStartup = "ok";
+    try {
+      const { listPublicContent, publicMediaBaseUrl } = await import("@uxd/api");
+      const storage = await server.getStorage();
+      const result = await listPublicContent(db, storage, { termSlugs: [], page: 1, pageSize: 1 } as never, {
+        publicBaseUrl: publicMediaBaseUrl(env),
+      });
+      report.publicQuery = `ok (${result.total} published)`;
+    } catch (error) {
+      report.publicQuery = describe(error);
+    }
+  } catch (error) {
+    report.cmsStartup = describe(error);
+  }
+
+  const healthy = report.settings === "ok" && report.database === "connected" && String(report.storage).startsWith("ok") && report.cmsStartup === "ok";
   return Response.json(report, { status: healthy ? 200 : 500, headers: { "cache-control": "no-store" } });
 }
