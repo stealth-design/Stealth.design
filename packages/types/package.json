@@ -5,5 +5,5 @@
   "type": "module",
   "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
   "scripts": { "build": "tsc -b", "clean": "rm -rf dist *.tsbuildinfo" },
-  "dependencies": { "zod": "4.5.4", "@uxd/shared": "0.1.0" }
+  "dependencies": { "zod": "4.6.7", "@uxd/shared": "0.1.0" }
 }

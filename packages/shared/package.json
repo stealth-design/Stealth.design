@@ -8,5 +8,5 @@
     "./env": { "types": "./dist/env.d.ts", "default": "./dist/env.js" }
   },
   "scripts": { "build": "tsc -b", "clean": "rm -rf dist *.tsbuildinfo" },
-  "dependencies": { "zod": "4.5.4" }
+  "dependencies": { "zod": "4.6.7" }
 }

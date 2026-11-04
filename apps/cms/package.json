@@ -19,20 +19,20 @@
     "@uxd/types": "0.1.0",
     "clsx": "2.1.1",
     "drizzle-orm": "0.45.2",
-    "hono": "4.13.5",
-    "lucide-react": "1.59.0",
+    "hono": "4.13.16",
+    "lucide-react": "1.66.0",
     "next": "16.3.4",
     "papaparse": "5.7.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "zod": "4.5.4"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
     "@types/papaparse": "5.5.2",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.6",
-    "postcss": "8.5.27",
+    "postcss": "8.5.32",
     "tailwindcss": "4.3.3"
   }
 }
