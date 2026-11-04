@@ -23,14 +23,14 @@
   "dependencies": {
     "@uxd/shared": "0.1.0",
     "@uxd/types": "0.1.0",
-    "drizzle-orm": "0.45.2",
-    "pg": "8.23.0",
+    "drizzle-orm": "0.45.4",
+    "pg": "8.23.1",
     "zod": "4.5.4"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.5.8",
+    "@electric-sql/pglite": "0.5.14",
     "@electric-sql/pglite-socket": "0.2.11",
     "@types/pg": "8.23.1",
-    "drizzle-kit": "0.31.10"
+    "drizzle-kit": "0.31.11"
   }
 }

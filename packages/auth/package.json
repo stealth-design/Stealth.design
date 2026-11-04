@@ -9,7 +9,7 @@
     "@uxd/database": "0.1.0",
     "@uxd/shared": "0.1.0",
     "@uxd/types": "0.1.0",
-    "drizzle-orm": "0.45.2",
+    "drizzle-orm": "0.45.4",
     "zod": "4.5.4"
   }
 }
