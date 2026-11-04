@@ -10,5 +10,5 @@
     "@uxd/types": "0.1.0",
     "zod": "4.5.4"
   },
-  "optionalDependencies": { "@anthropic-ai/sdk": "0.123.0" }
+  "optionalDependencies": { "@anthropic-ai/sdk": "1.3.0" }
 }
