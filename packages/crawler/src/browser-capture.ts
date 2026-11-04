@@ -23,15 +23,23 @@
  *   5. Hard timeouts and a page-weight budget, so one page cannot occupy a
  *      worker indefinitely.
  */
-import {
-  type Browser,
-  type BrowserContext,
-  type ConsoleMessage,
-  type Page,
-  type Route,
-  chromium,
-  devices,
-} from "playwright";
+import { createRequire } from "node:module";
+import type { Browser, BrowserContext, ConsoleMessage, Page, Route } from "playwright";
+
+/**
+ * Playwright, loaded on first use rather than when this module is imported.
+ *
+ * The CMS imports `@uxd/crawler` for its URL guard and HTML helpers, and must
+ * not load a browser automation library to do so: on a serverless host the
+ * package is only partly present (its `browsers.json` is not traced into the
+ * function), and loading it at import time took down every page. Only the
+ * capture worker ever launches a browser, and by then it is needed anyway.
+ */
+let playwrightModule: typeof import("playwright") | null = null;
+function playwright(): typeof import("playwright") {
+  playwrightModule ??= createRequire(import.meta.url)("playwright") as typeof import("playwright");
+  return playwrightModule;
+}
 import {
   type Logger,
   type Result,
@@ -370,8 +378,8 @@ export class BrowserPool {
     if (this.browser) await this.close();
     if (this.launching) return this.launching;
 
-    this.launching = chromium
-      .launch({
+    this.launching = playwright()
+      .chromium.launch({
         headless: this.options.headless ?? true,
         args: [...CHROMIUM_ARGS],
         ...(this.options.executablePath ? { executablePath: this.options.executablePath } : {}),
@@ -913,7 +921,7 @@ export function playwrightDeviceFor(profileKey: DeviceProfileKey) {
   // the desktop profiles that do not set it. Widening to the interface is the
   // correct read here.
   const profile: DeviceProfile = DEVICE_PROFILES[profileKey];
-  return profile.playwrightDevice ? devices[profile.playwrightDevice] : undefined;
+  return profile.playwrightDevice ? playwright().devices[profile.playwrightDevice] : undefined;
 }
 
 /** Guard a URL and capture it, in one call. */
