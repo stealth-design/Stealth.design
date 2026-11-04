@@ -16,7 +16,9 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 8
+    # Paused until after launch (Fri 2026-11-06): 0 stops version-update
+    # pull requests. Security updates still open. Set back to 8 to resume.
+    open-pull-requests-limit: 0
     # The lockfile is shared across workspaces, so all packages update
     # together whether or not this is set.
     versioning-strategy: increase
