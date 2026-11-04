@@ -81,6 +81,10 @@ async function services() {
             publicBaseUrl: env.STORAGE_PUBLIC_BASE_URL,
           }
         : undefined,
+    blob:
+      env.STORAGE_DRIVER === "blob" && env.BLOB_READ_WRITE_TOKEN
+        ? { token: env.BLOB_READ_WRITE_TOKEN, access: env.STORAGE_BLOB_ACCESS }
+        : undefined,
     logger,
   });
 

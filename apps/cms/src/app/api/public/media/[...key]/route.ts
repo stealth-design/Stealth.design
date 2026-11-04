@@ -60,7 +60,8 @@ export async function GET(
   // With S3 configured, public media URLs point at the bucket or its CDN.
   // Reaching this route then means a stale URL, and answering it would serve
   // from a path the deployment does not intend to use.
-  if (env.STORAGE_DRIVER !== "local") {
+  // `blob` is served through here too: its files are never linked directly.
+  if (env.STORAGE_DRIVER === "s3") {
     return notFound();
   }
 

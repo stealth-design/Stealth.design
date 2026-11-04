@@ -55,7 +55,11 @@ export const cmsEnvSchema = baseEnvSchema.extend({
   WORKER_SHARED_SECRET: z.string().min(32, "WORKER_SHARED_SECRET must be at least 32 characters"),
 
   /** Object storage. `local` writes under .data/media for development only. */
-  STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
+  STORAGE_DRIVER: z.enum(["local", "s3", "blob"]).default("local"),
+  /** Vercel Blob: set automatically when a Blob store is connected to the project. */
+  BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  /** Vercel Blob: whether the store was created private (the default) or public. */
+  STORAGE_BLOB_ACCESS: z.enum(["private", "public"]).default("private"),
   STORAGE_LOCAL_ROOT: z.string().default(".data/media"),
   STORAGE_S3_BUCKET: z.string().optional(),
   STORAGE_S3_REGION: z.string().default("auto"),
@@ -153,6 +157,7 @@ export const WORKER_FORBIDDEN_ENV_KEYS: readonly string[] = [
   "WORKER_SHARED_SECRET",
   "STORAGE_S3_ACCESS_KEY_ID",
   "STORAGE_S3_SECRET_ACCESS_KEY",
+  "BLOB_READ_WRITE_TOKEN",
   "ANTHROPIC_API_KEY",
   "AWS_ACCESS_KEY_ID",
   "AWS_SECRET_ACCESS_KEY",
@@ -261,6 +266,9 @@ export function loadCmsEnv(source: NodeJS.ProcessEnv = process.env): CmsEnv {
       .map(([k]) => `${k}: required when STORAGE_DRIVER=s3`);
     if (missing.length > 0) throw new EnvError("cms", missing);
   }
+  if (env.STORAGE_DRIVER === "blob" && !env.BLOB_READ_WRITE_TOKEN) {
+    throw new EnvError("cms", ["BLOB_READ_WRITE_TOKEN: required when STORAGE_DRIVER=blob (connect a Blob store to the project)"]);
+  }
   if (env.CLASSIFICATION_PROVIDER === "anthropic" && !env.ANTHROPIC_API_KEY) {
     throw new EnvError("cms", ["ANTHROPIC_API_KEY: required when CLASSIFICATION_PROVIDER=anthropic"]);
   }
@@ -281,7 +289,7 @@ export function loadCmsEnv(source: NodeJS.ProcessEnv = process.env): CmsEnv {
   if (env.NODE_ENV === "production") {
     const problems: string[] = [];
     if (env.STORAGE_DRIVER === "local") {
-      problems.push("STORAGE_DRIVER: 'local' is a development driver; use 's3' in production");
+      problems.push("STORAGE_DRIVER: 'local' is a development driver; use 'blob' or 's3' in production");
     }
     if (!env.SESSION_COOKIE_SECURE) {
       problems.push("SESSION_COOKIE_SECURE: must be true in production");

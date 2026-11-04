@@ -251,7 +251,8 @@ export function publicMediaBaseUrl(env: {
   readonly STORAGE_DRIVER: string;
   readonly CMS_BASE_URL: string;
 }): string | undefined {
-  return env.STORAGE_DRIVER === "local"
+  // `local` and `blob` are both served through the CMS's publish-gated route.
+  return env.STORAGE_DRIVER === "local" || env.STORAGE_DRIVER === "blob"
     ? `${env.CMS_BASE_URL.replace(/\/$/, "")}/api/public/media`
     : undefined;
 }

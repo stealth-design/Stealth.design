@@ -1,9 +1,9 @@
 /**
  * Object storage.
  *
- * Two drivers behind one interface. `s3` is the production driver and speaks to
- * any S3-compatible service; `local` writes under a directory and exists so the
- * repository runs with no cloud account and no Docker.
+ * Three drivers behind one interface. `s3` speaks to any S3-compatible
+ * service; `blob` stores in Vercel Blob; `local` writes under a directory and
+ * exists so the repository runs with no cloud account and no Docker.
  *
  * Binaries never go in the relational database (§9). What Postgres stores is
  * the `storageKey` plus the identity and provenance of the file — the part that
@@ -27,9 +27,10 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { del as blobDel, get as blobGet, head as blobHead, put as blobPut } from "@vercel/blob";
 import { AppError, ErrorCode, type Logger, uuidv7 } from "@uxd/shared";
 
-export type StorageDriverName = "local" | "s3";
+export type StorageDriverName = "local" | "s3" | "blob";
 
 export interface PutObjectInput {
   readonly key: string;
@@ -342,6 +343,97 @@ export function createS3Driver(config: S3DriverConfig): StorageDriver {
   };
 }
 
+// --- Vercel Blob driver ---------------------------------------------------
+
+export interface BlobDriverConfig {
+  /** The store's read-write token (Vercel sets `BLOB_READ_WRITE_TOKEN`). */
+  readonly token: string;
+  /** `private` unless the store was created public. */
+  readonly access: "public" | "private";
+  /** Base URL of the CMS route that serves these files. */
+  readonly publicBaseUrl: string;
+  readonly logger?: Logger;
+}
+
+/**
+ * Vercel Blob.
+ *
+ * Files are stored under their own key, with no random suffix, so a key maps
+ * to exactly one blob. They are never handed to browsers by their Blob URL:
+ * like `local`, `url()` points at the CMS's own media routes, which stream the
+ * bytes from Blob. That keeps the rule that a capture is private until it is
+ * published — the CMS route checks the session, the public route checks that
+ * the record is published — whether the store itself is public or private.
+ */
+export function createBlobDriver(config: BlobDriverConfig): StorageDriver {
+  const auth = { token: config.token };
+
+  return {
+    name: "blob",
+    bucket: null,
+    urlsExpire: false,
+
+    async put(input) {
+      assertSafeKey(input.key);
+      try {
+        const body = input.body instanceof Readable ? input.body : Buffer.from(input.body);
+        await blobPut(input.key, body, {
+          ...auth,
+          access: config.access,
+          contentType: input.contentType,
+          addRandomSuffix: false,
+          allowOverwrite: true,
+          // Originals and derivatives are immutable: a new version gets a new key.
+          cacheControlMaxAge: 31536000,
+        });
+        const byteSize = input.body instanceof Readable ? (input.contentLength ?? 0) : input.body.byteLength;
+        return { key: input.key, byteSize };
+      } catch (error) {
+        throw new AppError(ErrorCode.STORAGE_FAILED, "Could not save the file to Vercel Blob", {
+          detail: error instanceof Error ? error.message : "put failed",
+          cause: error,
+        });
+      }
+    },
+
+    async get(key) {
+      assertSafeKey(key);
+      const result = await blobGet(key, { ...auth, access: config.access });
+      if (!result || result.statusCode !== 200 || !result.stream) {
+        throw new AppError(ErrorCode.NOT_FOUND, "File not found", { detail: key });
+      }
+      return Readable.fromWeb(result.stream as import("node:stream/web").ReadableStream<Uint8Array>);
+    },
+
+    async head(key) {
+      assertSafeKey(key);
+      try {
+        const info = await blobHead(key, auth);
+        return { key, byteSize: info.size, contentType: info.contentType ?? null, lastModified: info.uploadedAt ?? null };
+      } catch {
+        return null;
+      }
+    },
+
+    async delete(key) {
+      assertSafeKey(key);
+      try {
+        await blobDel(key, auth);
+      } catch (error) {
+        // Already gone is success.
+        if ((error as { name?: string }).name !== "BlobNotFoundError") throw error;
+      }
+    },
+
+    async url(key, options) {
+      assertSafeKey(key);
+      const base = config.publicBaseUrl.replace(/\/$/, "");
+      const query = options?.download ? "?download=1" : "";
+      return `${base}/${key}${query}`;
+    },
+  };
+}
+
 // --- Factory --------------------------------------------------------------
 
 export interface StorageConfig {
@@ -349,6 +441,7 @@ export interface StorageConfig {
   readonly localRoot: string;
   readonly localPublicBaseUrl: string;
   readonly s3?: Omit<S3DriverConfig, "logger">;
+  readonly blob?: Omit<BlobDriverConfig, "logger" | "publicBaseUrl">;
   readonly logger?: Logger;
 }
 
@@ -360,6 +453,14 @@ export function createStorage(config: StorageConfig): StorageDriver {
       });
     }
     return createS3Driver({ ...config.s3, logger: config.logger });
+  }
+  if (config.driver === "blob") {
+    if (!config.blob) {
+      throw new AppError(ErrorCode.INTERNAL, "Storage misconfigured", {
+        detail: "STORAGE_DRIVER=blob but no BLOB_READ_WRITE_TOKEN was supplied",
+      });
+    }
+    return createBlobDriver({ ...config.blob, publicBaseUrl: config.localPublicBaseUrl, logger: config.logger });
   }
   return createLocalDriver({
     root: config.localRoot,
