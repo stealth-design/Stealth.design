@@ -1,0 +1,36 @@
+{
+  "name": "@uxd/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "default": "./dist/schema/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "generate": "drizzle-kit generate",
+    "migrate": "node --enable-source-maps dist/scripts/migrate.js",
+    "reset": "node --enable-source-maps dist/scripts/reset.js"
+  },
+  "dependencies": {
+    "@uxd/shared": "0.1.0",
+    "@uxd/types": "0.1.0",
+    "drizzle-orm": "0.45.2",
+    "pg": "8.23.0",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@electric-sql/pglite-socket": "0.2.11",
+    "@types/pg": "8.23.1",
+    "drizzle-kit": "0.31.10"
+  }
+}

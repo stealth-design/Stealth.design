@@ -1,0 +1,1 @@
+ALTER TABLE "capture_sessions" ADD COLUMN "default_term_ids" uuid[] DEFAULT '{}'::uuid[] NOT NULL;

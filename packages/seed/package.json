@@ -1,0 +1,30 @@
+{
+  "name": "@uxd/seed",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Development seed data. Depends on both @uxd/database and @uxd/auth, which is why it is its own package: putting it inside @uxd/database would make database depend on auth, and auth already depends on database.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "seed": "node --enable-source-maps dist/seed.js",
+    "seed:demo": "node --enable-source-maps dist/demo.js"
+  },
+  "dependencies": {
+    "@uxd/api": "0.1.0",
+    "@uxd/auth": "0.1.0",
+    "@uxd/classification": "0.1.0",
+    "@uxd/database": "0.1.0",
+    "@uxd/media": "0.1.0",
+    "@uxd/shared": "0.1.0",
+    "@uxd/types": "0.1.0",
+    "drizzle-orm": "0.45.2",
+    "sharp": "0.35.4"
+  }
+}

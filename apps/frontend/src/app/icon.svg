@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+  <!--
+    The UX Disrupt mark as a favicon.
+
+    Two differences from the in-app component, both forced by the context. A
+    favicon cannot inherit `currentColor` or a CSS variable, so the colours are
+    literal. And it is viewed at 16px against a browser chrome of unknown
+    lightness, so the settled tiles use a mid-dark neutral that holds up on both
+    a light and a dark tab strip rather than near-black, which disappears on
+    dark.
+
+    The displaced tile keeps the accent, because at 16px it is the only thing
+    that makes the displacement legible — see components/logo.tsx.
+  -->
+  <rect x="2" y="2" width="9" height="9" rx="2" fill="#2c2c33"/>
+  <rect x="2" y="13" width="9" height="9" rx="2" fill="#2c2c33"/>
+  <rect x="13" y="13" width="9" height="9" rx="2" fill="#2c2c33"/>
+  <g transform="translate(1.8 -1.6) rotate(20 17.5 6.5)">
+    <rect x="13" y="2" width="9" height="9" rx="2" fill="#2b59ff"/>
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+{
+  "name": "@uxd/media",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "scripts": { "build": "tsc -b", "clean": "rm -rf dist *.tsbuildinfo" },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1125.0",
+    "@aws-sdk/s3-request-presigner": "3.1125.0",
+    "@uxd/shared": "0.1.0",
+    "@uxd/types": "0.1.0",
+    "file-type": "22.0.2",
+    "sharp": "0.35.4",
+    "zod": "4.5.4"
+  }
+}

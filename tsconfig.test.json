@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // Tests are executed by `node --experimental-strip-types`, which erases
+    // types without checking them. Nothing else typechecks them either: each
+    // package's tsconfig deliberately excludes `*.test.ts` from its build so
+    // test code never reaches `dist`. That combination lets a test call a
+    // function with the wrong argument shape and still pass — the argument is
+    // simply ignored, the assertion is trivially satisfied, and the suite goes
+    // green while asserting nothing.
+    //
+    // This project exists to typecheck the tests themselves. It emits nothing
+    // and is not part of the build graph; `npm run typecheck` runs it as a
+    // second pass over the same sources.
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "composite": false,
+    "incremental": false,
+    "sourceMap": false,
+    "types": ["node"]
+  },
+  "include": ["packages/*/test/**/*.ts", "apps/*/test/**/*.ts"]
+}

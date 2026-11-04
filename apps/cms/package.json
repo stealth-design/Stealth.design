@@ -1,0 +1,38 @@
+{
+  "name": "@uxd/cms",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@uxd/api": "0.1.0",
+    "@uxd/auth": "0.1.0",
+    "@uxd/classification": "0.1.0",
+    "@uxd/database": "0.1.0",
+    "@uxd/media": "0.1.0",
+    "@uxd/shared": "0.1.0",
+    "@uxd/types": "0.1.0",
+    "clsx": "2.1.1",
+    "drizzle-orm": "0.45.2",
+    "hono": "4.13.5",
+    "lucide-react": "1.59.0",
+    "next": "16.3.4",
+    "papaparse": "5.7.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/papaparse": "5.5.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.6",
+    "postcss": "8.5.27",
+    "tailwindcss": "4.3.3"
+  }
+}

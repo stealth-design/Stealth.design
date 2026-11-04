@@ -1,0 +1,2 @@
+ALTER TABLE "sources" ADD COLUMN "site" text;--> statement-breakpoint
+CREATE UNIQUE INDEX "sources_site_key" ON "sources" USING btree ("site") WHERE "sources"."deleted_at" is null and "sources"."site" is not null;

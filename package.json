@@ -1,0 +1,46 @@
+{
+  "name": "uxdisrupt",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "db:serve": "node --experimental-strip-types packages/database/scripts/serve-pglite.ts",
+    "db:generate": "npm run -w @uxd/database generate",
+    "db:migrate": "npm run -w @uxd/database migrate",
+    "db:reset": "npm run -w @uxd/database reset",
+    "db:seed": "npm run -w @uxd/seed seed",
+    "db:seed:demo": "npm run -w @uxd/seed seed:demo",
+    "dev": "node scripts/dev.mjs",
+    "dev:cms": "npm run -w @uxd/cms dev",
+    "dev:frontend": "npm run -w @uxd/frontend dev",
+    "dev:worker": "npm run -w @uxd/ingestion-worker dev",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "tsc -b --pretty tsconfig.build.json && npm run typecheck:tests",
+    "typecheck:tests": "tsc --noEmit --pretty -p tsconfig.test.json",
+    "lint": "npm run typecheck && npm run check:boundaries && npm run check:sql",
+    "audit:inventory": "node scripts/audit-inventory.mjs",
+    "audit:integrity": "node scripts/audit-integrity.mjs",
+    "audit:review-load": "node scripts/audit-review-load.mjs",
+    "experiment:crawl": "node scripts/experiments/run-crawl.mjs",
+    "experiment:analyse": "node scripts/experiments/analyse-crawl.mjs",
+    "test": "node --experimental-strip-types --test --test-concurrency=1 \"packages/**/*.test.ts\" \"apps/**/*.test.ts\"",
+    "test:watch": "node --experimental-strip-types --test --watch --test-concurrency=1 \"packages/**/*.test.ts\"",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check:sql": "node scripts/check-correlated-sql.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "verify:pipeline": "node scripts/verify-pipeline.mjs",
+    "verify:render": "node scripts/render-check.mjs",
+    "setup": "node scripts/setup.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@uxd/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./client": { "types": "./dist/client/index.d.ts", "default": "./dist/client/index.js" }
+  },
+  "scripts": { "build": "tsc -b", "clean": "rm -rf dist *.tsbuildinfo" },
+  "dependencies": {
+    "@hono/zod-validator": "0.9.1",
+    "@uxd/auth": "0.1.0",
+    "@uxd/classification": "0.1.0",
+    "@uxd/database": "0.1.0",
+    "@uxd/media": "0.1.0",
+    "@uxd/shared": "0.1.0",
+    "@uxd/types": "0.1.0",
+    "drizzle-orm": "0.45.2",
+    "hono": "4.13.5",
+    "zod": "4.5.4"
+  }
+}

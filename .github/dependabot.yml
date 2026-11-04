@@ -1,0 +1,49 @@
+# Automated dependency and security updates.
+#
+# Every dependency in this repository is pinned to an exact version — no `^`,
+# no `~` — and `scripts/check-boundaries.mjs` fails the build if one is not.
+# That is the precondition for this file: exact pins without automation mean
+# falling behind deliberately rather than accidentally, which is not better.
+#
+# Grouped so a week's updates are one or two pull requests to review rather
+# than fifteen. Security updates are ungrouped and immediate, because a
+# security fix should not wait for the rest of its group to be ready.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 8
+    # The lockfile is shared across workspaces, so all packages update
+    # together whether or not this is set.
+    versioning-strategy: increase
+    labels: ["dependencies"]
+    groups:
+      # The pieces that have to move together. A Next major with a stale React
+      # is not a reviewable change.
+      next:
+        patterns: ["next", "react", "react-dom", "@types/react", "@types/react-dom", "eslint-config-next"]
+      # Same for the data layer: drizzle-orm and drizzle-kit generate and
+      # consume the same migrations.
+      drizzle:
+        patterns: ["drizzle-orm", "drizzle-kit", "pg", "@types/pg", "@electric-sql/pglite", "pglite-socket"]
+      # The capture path. Playwright and its browser build are one unit.
+      capture:
+        patterns: ["playwright", "playwright-core"]
+      types:
+        patterns: ["@types/*"]
+        exclude-patterns: ["@types/react", "@types/react-dom", "@types/pg"]
+      # Everything else, patch and minor only — majors get their own PR so the
+      # changelog is read.
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels: ["dependencies"]

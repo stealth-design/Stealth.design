@@ -1,0 +1,198 @@
+@import "tailwindcss";
+
+/**
+ * CMS visual system.
+ *
+ * §28 asks for a serious professional tool optimised for speed, clarity,
+ * control, accuracy and throughput — explicitly not for flashy visuals. So the
+ * choices here are all in service of scanning density:
+ *
+ *   - A 13px base with tight line height, because these screens are tables and
+ *     an operator needs to see thirty rows without scrolling.
+ *   - One neutral ramp plus six status tones. Status colour is the only colour
+ *     that carries meaning, so nothing else competes with it.
+ *   - Borders rather than shadows for separation: shadows on a dense table read
+ *     as noise, and borders align to the pixel grid.
+ *   - A monospace ramp for URLs, hashes and IDs, which are compared character
+ *     by character far more often than they are read.
+ */
+
+@theme {
+  --font-sans: var(--font-geist), ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Neutral ramp, dark. The scale runs from the room (50) to the brightest
+     text (950), so the names keep their meaning — 50 is the background, 900
+     is the strongest text — and every screen written against the ramp turns
+     dark without being touched. The same room as the public site: one
+     product, two doors. */
+  --color-ink-50: #0a0a0a;
+  --color-ink-100: #161616;
+  --color-ink-200: #1f1f1f;
+  --color-ink-300: #2c2c2c;
+  --color-ink-400: #5c5c5c;
+  --color-ink-500: #8a8a8a;
+  --color-ink-600: #a1a1a1;
+  --color-ink-700: #b9b9b9;
+  --color-ink-800: #d6d6d6;
+  --color-ink-900: #ededed;
+  --color-ink-950: #fafafa;
+
+  /* A panel, a card, an input: one step up from the room. */
+  --color-surface: #111111;
+
+  /* Status tones. One hue per meaning, each a light ink on a faint wash of
+     itself, so a badge reads as a status rather than a button. */
+  --color-tone-neutral: #8a8a8a;
+  --color-tone-neutral-bg: #1a1a1a;
+  --color-tone-info: #8aa6ff;
+  --color-tone-info-bg: rgb(77 116 255 / 0.14);
+  --color-tone-progress: #b9a2ff;
+  --color-tone-progress-bg: rgb(139 92 246 / 0.15);
+  --color-tone-warning: #f2b65e;
+  --color-tone-warning-bg: rgb(242 182 94 / 0.12);
+  --color-tone-success: #5bd393;
+  --color-tone-success-bg: rgb(91 211 147 / 0.12);
+  --color-tone-danger: #ff8077;
+  --color-tone-danger-bg: rgb(255 128 119 / 0.12);
+
+  --color-accent: #4d74ff;
+  --color-accent-hover: #6a8bff;
+
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
+:root {
+  color-scheme: dark;
+  --row-height: 36px;
+  --sidebar-width: 232px;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-ink-200);
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-ink-50);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  /* Tabular figures everywhere: counts in a column must line up, or comparing
+     them means reading each one instead of scanning the shape. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* A visible, consistent focus ring, the same everywhere so an operator learns
+   it once. In the base layer so a component can opt out with a utility — an
+   input inside a framed field shows focus on the frame, not twice. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+    border-radius: 2px;
+  }
+
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+}
+
+/* Scrollbars sized for dense panes rather than hidden: a hidden scrollbar in a
+   long table removes the only cue about how much more there is. */
+@supports selector(::-webkit-scrollbar) {
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-ink-300);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-400);
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: -0.01em;
+}
+
+/* The standard dense table. Used by every list screen so they behave
+   identically — §28's "predictable tables". */
+@utility data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-sm);
+
+  & thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-ink-200);
+    padding: 0 0.625rem;
+    height: 32px;
+    text-align: left;
+    font-weight: 500;
+    font-size: var(--text-xs);
+    color: var(--color-ink-500);
+    white-space: nowrap;
+  }
+
+  & tbody td {
+    padding: 0 0.625rem;
+    height: var(--row-height);
+    border-bottom: 1px solid var(--color-ink-200);
+    vertical-align: middle;
+  }
+
+  & tbody tr:hover td {
+    background: var(--color-ink-100);
+  }
+
+  & tbody tr[data-selected="true"] td {
+    background: var(--color-tone-info-bg);
+  }
+}
+
+/* Truncation that keeps a title readable in a fixed column. */
+@utility truncate-cell {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,35 @@
+node_modules/
+.next/
+dist/
+build/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Local data: PGlite database + local media storage driver output
+.data/
+
+# Crawlee local storage (request queues, key-value stores, datasets)
+storage/
+apps/ingestion-worker/storage/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.worker
+!.env.example
+!.env.worker.example
+
+# Playwright
+test-results/
+playwright-report/
+.playwright/
+
+# OS / editors
+.DS_Store
+*.log
+npm-debug.log*
+.idea/
+.vscode/*
+!.vscode/extensions.json

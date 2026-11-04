@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "moduleDetection": "force",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnreachableCode": false,
+    "forceConsistentCasingInFileNames": true,
+    "useUnknownInCatchVariables": true,
+
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+
+    /**
+     * A project with type errors must not leave build output behind.
+     *
+     * `tsc -b` decides a project is up to date by comparing timestamps. Without
+     * this, a failing project still emits its `dist` and `.tsbuildinfo`, so it
+     * looks up to date on the next run and is *skipped silently* — which is how
+     * `npm run typecheck` came to report success while `@uxd/crawler` had a
+     * dozen real errors in it. The errors were reported once, months of runs
+     * ago, and then cached away.
+     *
+     * With this set, a failure emits nothing, so every subsequent run
+     * re-checks and re-reports until it is actually fixed.
+     */
+    "noEmitOnError": true,
+
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "incremental": true,
+    "removeComments": false,
+    "pretty": true
+  },
+  "exclude": ["node_modules", "dist", ".next"]
+}

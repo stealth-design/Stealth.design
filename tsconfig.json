@@ -1,0 +1,36 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/shared"
+    },
+    {
+      "path": "./packages/types"
+    },
+    {
+      "path": "./packages/database"
+    },
+    {
+      "path": "./packages/auth"
+    },
+    {
+      "path": "./packages/media"
+    },
+    {
+      "path": "./packages/crawler"
+    },
+    {
+      "path": "./packages/classification"
+    },
+    {
+      "path": "./packages/api"
+    },
+    {
+      "path": "./packages/seed"
+    },
+    {
+      "path": "./apps/ingestion-worker"
+    }
+  ]
+}
