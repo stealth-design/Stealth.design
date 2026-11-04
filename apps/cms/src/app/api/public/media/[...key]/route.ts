@@ -30,7 +30,7 @@
  *   a query parameter.
  * - **Reads only.** Anything that is not a GET is refused.
  */
-import { findPublicMediaByKey } from "@uxd/api";
+import { findPublicMediaByKey, mediaServedByCms } from "@uxd/api";
 import { assertSafeKey } from "@uxd/media";
 import { getDb, getEnv, getStorage } from "@/lib/server";
 
@@ -57,11 +57,11 @@ export async function GET(
 ): Promise<Response> {
   const env = await getEnv();
 
-  // With S3 configured, public media URLs point at the bucket or its CDN.
-  // Reaching this route then means a stale URL, and answering it would serve
-  // from a path the deployment does not intend to use.
-  // `blob` is served through here too: its files are never linked directly.
-  if (env.STORAGE_DRIVER === "s3") {
+  // With a public bucket or CDN, public media URLs point there. Reaching this
+  // route then means a stale URL, and answering it would serve from a path
+  // the deployment does not intend to use. Everything else (`local`, `blob`,
+  // a private S3 bucket) is served through here.
+  if (!mediaServedByCms(env)) {
     return notFound();
   }
 

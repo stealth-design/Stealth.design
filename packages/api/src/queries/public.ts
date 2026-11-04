@@ -250,11 +250,22 @@ export interface MediaUrlOptions {
 export function publicMediaBaseUrl(env: {
   readonly STORAGE_DRIVER: string;
   readonly CMS_BASE_URL: string;
+  readonly STORAGE_PUBLIC_BASE_URL?: string;
 }): string | undefined {
-  // `local` and `blob` are both served through the CMS's publish-gated route.
-  return env.STORAGE_DRIVER === "local" || env.STORAGE_DRIVER === "blob"
-    ? `${env.CMS_BASE_URL.replace(/\/$/, "")}/api/public/media`
-    : undefined;
+  // Served through the CMS's publish-gated route unless the bucket has its own
+  // public address (a CDN). That covers `local`, `blob`, and a *private* S3
+  // bucket such as Neon Object Storage, whose presigned links expire after an
+  // hour: the public site caches pages for longer than that, so handing those
+  // out would leave visitors with broken images.
+  return mediaServedByCms(env) ? `${env.CMS_BASE_URL.replace(/\/$/, "")}/api/public/media` : undefined;
+}
+
+/** Whether media bytes are streamed by the CMS rather than linked directly. */
+export function mediaServedByCms(env: {
+  readonly STORAGE_DRIVER: string;
+  readonly STORAGE_PUBLIC_BASE_URL?: string;
+}): boolean {
+  return env.STORAGE_DRIVER !== "s3" || !env.STORAGE_PUBLIC_BASE_URL;
 }
 
 export interface PublicContentQuery {
