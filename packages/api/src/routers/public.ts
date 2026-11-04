@@ -317,7 +317,7 @@ export function createPublicApi(deps: PublicApiDeps): Hono<Env> {
     async (c) => {
       const ctx = c.get("ctx");
       const query = c.req.valid("query");
-      const { items, total } = await listPublicSources(ctx.db, query);
+      const { items, total } = await listPublicSources(ctx.db, query, { storage: ctx.storage, options: mediaUrlOptions(ctx) });
       c.header("cache-control", CACHE.list);
       return c.json(publicList(items, total, query.page, query.pageSize));
     },
@@ -325,7 +325,7 @@ export function createPublicApi(deps: PublicApiDeps): Hono<Env> {
 
   app.get("/sources/:slug", async (c) => {
     const ctx = c.get("ctx");
-    const source = await getPublicSource(ctx.db, c.req.param("slug"));
+    const source = await getPublicSource(ctx.db, c.req.param("slug"), { storage: ctx.storage, options: mediaUrlOptions(ctx) });
     if (!source) throw new AppError(ErrorCode.NOT_FOUND, "Not found");
     c.header("cache-control", CACHE.detail);
     return c.json(source);

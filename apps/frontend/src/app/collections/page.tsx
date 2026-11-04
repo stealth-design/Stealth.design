@@ -1,11 +1,12 @@
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { EmptyState, PageIntro, Room } from "@/components/gallery";
+import { EmptyState, PageHeader } from "@/components/gallery";
 import { api } from "@/lib/api";
 import { plural } from "@/lib/format";
 
 export const metadata = { title: "Collections" };
 
-/** Curated sets, as a quiet list. */
+/** Curated sets, as a list of rows: number, name, description, size. */
 export default async function CollectionsPage() {
   const collections = [...(await api.listCollections())].sort(
     (a, b) => Number(b.itemCount > 0) - Number(a.itemCount > 0),
@@ -13,33 +14,45 @@ export default async function CollectionsPage() {
 
   return (
     <>
-      <PageIntro
+      <PageHeader
+        label={plural(collections.length, "collection")}
         title="Collections"
-        count={plural(collections.length, "collection")}
-        description="Curated sets of screens, in the order they were arranged."
+        note="Sets of websites, grouped around an idea."
       />
+
       {collections.length === 0 ? (
         <EmptyState title="No collections yet" />
       ) : (
-        <Room>
-          <ul className="max-w-3xl divide-y divide-white/[0.06] border-y border-white/[0.06]">
-            {collections.map((collection) => (
-              <li key={collection.id}>
-                <Link href={`/browse?collection=${encodeURIComponent(collection.slug)}`} className="group flex items-baseline gap-6 py-4">
-                  <span className="min-w-0 flex-1">
-                    <span className={collection.itemCount > 0 ? "text-[14px] text-lit" : "text-[14px] text-dim"}>{collection.name}</span>
-                    {collection.description ? (
-                      <span className="mt-1 block text-[13px] leading-relaxed text-faint group-hover:text-dim">{collection.description}</span>
-                    ) : null}
-                  </span>
-                  <span className="num shrink-0 text-[12px] text-faint">
-                    {collection.itemCount > 0 ? plural(collection.itemCount, "entry", "entries") : "empty"}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Room>
+        <ol className="border-b">
+          {collections.map((collection, index) => (
+            <li key={collection.id} className="border-t">
+              <Link
+                href={`/browse?collection=${encodeURIComponent(collection.slug)}`}
+                className={
+                  collection.itemCount > 0
+                    ? "group page-grid items-baseline gap-y-3 py-8 transition-colors hover:bg-muted"
+                    : "group page-grid items-baseline gap-y-3 py-8 text-muted-foreground transition-colors hover:bg-muted"
+                }
+              >
+                <span className="t-label col-span-1 text-muted-foreground">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="t-card col-span-3 md:col-span-5 md:col-start-2">
+                  {collection.name}
+                </span>
+                <span className="col-span-full text-[15px] leading-relaxed font-light text-muted-foreground md:col-span-4 md:col-start-7">
+                  {collection.description}
+                </span>
+                <span className="t-label col-span-full flex items-center justify-end gap-2 md:col-span-2 md:col-start-11">
+                  {collection.itemCount > 0
+                    ? plural(collection.itemCount, "website")
+                    : "Empty"}
+                  <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ol>
       )}
     </>
   );

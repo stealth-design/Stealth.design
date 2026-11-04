@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
   <!--
-    The UX Disrupt mark as a favicon.
+    The Stealth.design mark as a favicon.
 
     Two differences from the in-app component, both forced by the context. A
     favicon cannot inherit `currentColor` or a CSS variable, so the colours are

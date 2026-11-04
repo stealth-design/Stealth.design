@@ -53,6 +53,10 @@ export interface PublicSourceSummary {
   readonly productName: string | null;
   readonly type: string;
   readonly module: string;
+  /** The website's logo, a raster image; null when it has none. */
+  readonly logoUrl: string | null;
+  /** The website itself — where "View website" goes. Always http(s). */
+  readonly websiteUrl: string | null;
 }
 
 export interface PublicSourceDetail extends PublicSourceSummary {

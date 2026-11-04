@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { EmptyState, PageIntro, Room } from "@/components/gallery";
+import { EmptyState, PageHeader } from "@/components/gallery";
+import { Reveal } from "@/components/reveal";
 import { api } from "@/lib/api";
-import { humanise, plural } from "@/lib/format";
+import { kindLabel, plural } from "@/lib/format";
 
 export const metadata = { title: "Patterns" };
 
@@ -19,7 +20,10 @@ const ORDER = [
   "device",
 ];
 
-/** The vocabularies screens are classified with, as an index. */
+/**
+ * The vocabularies screens are classified with: one centred title per
+ * vocabulary, its terms beneath as a dotted line of links.
+ */
 export default async function PatternsPage() {
   const facets = await api.listFacets();
   const total = facets.reduce((sum, group) => sum + group.terms.length, 0);
@@ -32,35 +36,44 @@ export default async function PatternsPage() {
 
   return (
     <>
-      <PageIntro
-        title="Patterns"
-        count={plural(total, "term")}
-        description="What these screens are classified by. Only terms a person has confirmed on published screens appear here."
+      <PageHeader
+        label={plural(total, "tag")}
+        title="Tags"
+        note="Every tag on the site. Pick one to see the websites that have it."
       />
+
       {groups.length === 0 ? (
-        <EmptyState title="No patterns yet">Terms appear once a person has confirmed them on published screens.</EmptyState>
+        <EmptyState title="No patterns yet">
+          Tags show up here once websites have them.
+        </EmptyState>
       ) : (
-        <Room className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="border-b">
           {groups.map((group) => (
-            <section key={group.kind}>
-              <h2 className="mb-3 text-[12px] text-faint">{humanise(group.kind)}</h2>
-              <ul className="space-y-1.5">
+            <Reveal
+              key={group.kind}
+              className="border-t px-4 py-14 text-center md:px-10 md:py-20"
+            >
+              <h2 className="t-title">{kindLabel(group.kind)}</h2>
+              <p className="t-label mx-auto mt-7 flex max-w-5xl flex-wrap justify-center gap-x-6 gap-y-3">
                 {group.terms.map(({ term, count }) => (
-                  <li key={term.id}>
-                    <Link
-                      href={`/screens?term=${encodeURIComponent(term.slug)}`}
-                      title={term.description ?? undefined}
-                      className="group flex items-baseline gap-3 text-[13px]"
-                    >
-                      <span className="text-dim transition-colors group-hover:text-lit">{term.name}</span>
-                      <span className="num text-[11px] text-faint">{count}</span>
-                    </Link>
-                  </li>
+                  <Link
+                    key={term.id}
+                    href={`/screens?term=${encodeURIComponent(term.slug)}`}
+                    title={term.description ?? undefined}
+                    className="flex items-center gap-2 hover:opacity-60"
+                  >
+                    <span
+                      aria-hidden
+                      className="size-1 rounded-full bg-muted-foreground"
+                    />
+                    {term.name}
+                    <span className="text-muted-foreground">{count}</span>
+                  </Link>
                 ))}
-              </ul>
-            </section>
+              </p>
+            </Reveal>
           ))}
-        </Room>
+        </div>
       )}
     </>
   );

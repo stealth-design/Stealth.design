@@ -3,34 +3,34 @@
 @import "shadcn/tailwind.css";
 
 /**
- * Public site styles — the lightbox.
+ * Public site styles.
  *
- * ## The idea
+ * ## The system
  *
- * The screens are the only light in the room. Everything else is the room:
- * a near-black canvas, and an interface that sits just above the threshold
- * of attention — small, dim, and brighter only when reached for.
+ * Three rules, and every page is built from them rather than decorated after.
  *
- * From that, the rules:
+ * 1. **One grid.** Twelve columns, 40px margins, 24px gutters at desktop;
+ *    four columns, 16px margins below `md`. Headings, labels, stats and images
+ *    all start on a column line — the header's links included — so a page
+ *    reads as one composition rather than a stack of blocks.
  *
- * - **Dark only.** A lightbox has no light mode. A captured interface reads
- *   truest against black, where nothing competes with its own colours.
- * - **Small type, few weights.** Geist for words, Geist Mono for numbers —
- *   frame counters, counts, dimensions. There are no display headlines; the
- *   largest thing on any page is a screenshot.
- * - **Dim by default.** Text sits at three levels of light. Hover and focus
- *   raise an element one level; nothing else changes colour.
- * - **One effect, and it is the concept:** a faint pool of light under the
- *   screen being looked at, as if it were lit from behind.
- * - **One colour beyond grey:** the blue of the mark's displaced tile, used
- *   for the active frame and focus, and nowhere else.
+ * 2. **One grotesk, one mono, extreme contrast.** Capitals at the top of the
+ *    scale, light weight for reading, small spaced mono for annotation. Few
+ *    sizes, far apart. Sizes are fluid with the viewport, so the composition
+ *    holds its proportions on any screen rather than reflowing into a
+ *    different one.
+ *
+ * 3. **No chrome the content did not ask for.** Black and white; the colour
+ *    on a page comes from the screenshots. Images are framed by whitespace,
+ *    not by borders, shadows or badges. The only fills are the black button
+ *    and the black "see all" bar.
  */
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, "SF Mono", Menlo, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -52,65 +52,97 @@
   --color-ring: var(--ring);
   --color-brand: var(--brand);
   --color-shot: var(--shot);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-nav: var(--nav);
+  --color-nav-foreground: var(--nav-foreground);
 
-  /* The three levels of light, as text colours. */
-  --color-lit: var(--lit);
-  --color-dim: var(--dim);
-  --color-faint: var(--faint);
-
-  --radius-sm: 3px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 8px;
-  --radius-2xl: 10px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
 }
 
-/*
- * One palette. `:root` and `.dark` carry the same values so shadcn components
- * that look for either get the room, never a white popover.
- */
-:root,
+:root {
+  --radius: 8px;
+
+  /* The type scale, fluid with the viewport. Values in comments are at 1440px. */
+  --t-hero: clamp(2.75rem, 11.5vw, 13rem);    /* the wordmark */
+  --t-display: clamp(2.5rem, 5.6vw, 6.5rem);  /* 80px — page titles */
+  --t-h2: clamp(2rem, 4.8vw, 5.5rem);         /* 69px — section titles */
+  --t-stat: clamp(2rem, 3.6vw, 4rem);         /* 52px — numbers */
+  --t-title: clamp(1.75rem, 4.4vw, 5rem);     /* 63px — centred sans titles */
+  --t-lead: clamp(1.25rem, 2vw, 2.25rem);     /* 29px — the one sentence */
+  --t-card: clamp(1.125rem, 1.75vw, 1.75rem); /* 25px — card titles */
+  --t-nav: clamp(1rem, 1.45vw, 1.5rem);       /* 21px — header links */
+  --t-note: clamp(0.8125rem, 1.15vw, 1.2rem); /* 16.5px — mono notes */
+
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f2f2;
+  --secondary-foreground: #000000;
+  --muted: #f2f2f2;
+  --muted-foreground: #6b6b6b;
+  --accent: #f2f2f2;
+  --accent-foreground: #000000;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #e4e4e4;
+  --input: #d6d6d6;
+  --ring: #2b59ff;
+  --brand: #2b59ff;
+  --shot: #ededed;
+  --ink: #0f0f0f;
+  --ink-foreground: #ffffff;
+  /* The header bar. The same in both themes: it is the brand, not a surface. */
+  --nav: #ff3928;
+  --nav-foreground: #ffffff;
+}
+
 .dark {
-  --radius: 6px;
-
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --card: #111111;
-  --card-foreground: #ededed;
-  --popover: #141414;
-  --popover-foreground: #ededed;
-  --primary: #ededed;
-  --primary-foreground: #0a0a0a;
-  --secondary: #171717;
-  --secondary-foreground: #ededed;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #0d0d0d;
+  --card-foreground: #ffffff;
+  --popover: #111111;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #161616;
+  --secondary-foreground: #ffffff;
   --muted: #161616;
-  --muted-foreground: #7a7a7a;
-  --accent: #1c1c1c;
-  --accent-foreground: #ededed;
+  --muted-foreground: #8f8f8f;
+  --accent: #1a1a1a;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: #1f1f1f;
-  --input: #2a2a2a;
-  --ring: #4d74ff;
-  --brand: #4d74ff;
+  --border: #232323;
+  --input: #2e2e2e;
+  --ring: #5b7cff;
+  --brand: #5b7cff;
   --shot: #141414;
-
-  --lit: #ededed;
-  --dim: #8a8a8a;
-  --faint: #4a4a4a;
+  --ink: #ffffff;
+  --ink-foreground: #000000;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/60;
+    @apply border-border outline-ring/50;
   }
   html {
+    color-scheme: light;
+  }
+  html.dark {
     color-scheme: dark;
-    background: var(--background);
   }
   body {
-    @apply bg-background font-sans text-lit antialiased;
-    font-size: 14px;
-    line-height: 1.5;
+    @apply bg-background font-sans text-foreground antialiased;
+    font-weight: 400;
   }
   ::selection {
     background: var(--brand);
@@ -119,14 +151,89 @@
 }
 
 @layer components {
-  /** Numbers: frame counters, counts, dimensions. Always mono, always tabular. */
-  .num {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0;
+  /**
+   * The grid. Every section is one, and its children say which columns they
+   * occupy (`col-span-…`, `col-start-…`). Four columns on small screens.
+   */
+  .page-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: 16px;
+    padding-inline: 16px;
+  }
+  @media (min-width: 768px) {
+    .page-grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 24px;
+      padding-inline: 40px;
+    }
   }
 
-  /** A screenshot: cropped from the top in a frame, never stretched. */
+  /** Capitals at the top of the scale. Tight, heavy, and only for titles. */
+  .t-display {
+    font-size: var(--t-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: -0.04em;
+    line-height: 0.86;
+  }
+  .t-h2 {
+    font-size: var(--t-h2);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: -0.04em;
+    line-height: 0.86;
+  }
+  /** Large, regular-weight, lower case: titles that should read as words. */
+  .t-title {
+    font-size: var(--t-title);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .t-stat {
+    font-size: var(--t-stat);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .t-lead {
+    font-size: var(--t-lead);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+  }
+  .t-card {
+    font-size: var(--t-card);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+  .t-nav {
+    font-size: var(--t-nav);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  /** Mono annotation: spaced capitals. Two sizes and no others. */
+  .t-note {
+    font-family: var(--font-mono);
+    font-size: var(--t-note);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.25;
+  }
+  .t-label {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.5;
+  }
+
+  /** A screenshot: cropped from the top, never stretched. */
   .shot-img {
     display: block;
     width: 100%;
@@ -137,17 +244,6 @@
   }
   .shot-img[data-portrait="true"] {
     object-fit: contain;
-  }
-
-  /**
-   * The light under the screen being looked at: a wide, soft bloom, as if the
-   * screenshot were lit from behind. The only effect on the site.
-   */
-  .lit-from-behind {
-    box-shadow:
-      0 0 0 1px rgb(255 255 255 / 0.06),
-      0 30px 120px -20px rgb(255 255 255 / 0.09),
-      0 0 240px 0 rgb(255 255 255 / 0.04);
   }
 
   .no-scrollbar {

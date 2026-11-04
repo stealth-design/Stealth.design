@@ -26,5 +26,5 @@ export const api: PublicApiClient = createPublicApiClient({
   // someone publishes something, not continuously, and a minute of staleness
   // on a public page costs nothing while removing a per-request round trip.
   revalidate: 60,
-  userAgent: "uxdisrupt-frontend/0.1",
+  userAgent: "stealth-design-frontend/0.1",
 });

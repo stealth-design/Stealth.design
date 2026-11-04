@@ -1,5 +1,7 @@
 /**
- * The UX Disrupt mark.
+ * The Stealth.design mark.
+ *
+ * Drawn for the old name (UX Disrupt), kept until the new mark is decided.
  *
  * ## What it is
  *
@@ -60,13 +62,7 @@ export function LogoMark({
   );
 }
 
-/**
- * Mark plus wordmark.
- *
- * "UX" carries the weight and "Disrupt" is set light, which is the ordinary
- * treatment for a two-part name where the first part is an initialism — it
- * stops "UXDisrupt" reading as one long word without needing a separator.
- */
+/** Mark plus wordmark. */
 export function Logo({
   size = 22,
   showWordmark = true,
@@ -80,8 +76,35 @@ export function Logo({
     <span className={`flex shrink-0 items-center gap-2 ${className ?? ""}`}>
       <LogoMark size={size} />
       {showWordmark ? (
-        <span className="text-[13px] leading-none font-medium tracking-[-0.01em]">UX Disrupt</span>
+        <span className="text-[22px] leading-none font-semibold tracking-[-0.05em]">
+          Stealth.design
+        </span>
       ) : null}
     </span>
+  );
+}
+
+/**
+ * The stealth wordmark, the logo in the header.
+ *
+ * Drawn from `public/brand/stealth-wordmark.png` used as a mask, so the
+ * letters take the current text colour: black in light mode, white in dark,
+ * from one file. The proportions are the file's own (1030 × 221).
+ */
+export function Wordmark({
+  height = 20,
+  className,
+}: {
+  height?: number | string;
+  className?: string;
+}) {
+  const mask =
+    "url(/brand/stealth-wordmark.png) left center / contain no-repeat";
+  return (
+    <span
+      aria-hidden
+      className={`block shrink-0 bg-current ${className ?? ""}`}
+      style={{ height, aspectRatio: "1030 / 221", mask, WebkitMask: mask }}
+    />
   );
 }

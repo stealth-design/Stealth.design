@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Inter_Tight } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -7,32 +7,55 @@ import { cn } from "@/lib/utils";
 import "./globals.css";
 
 /**
- * Geist for words, Geist Mono for numbers. Self-hosted by `next/font` at
- * build time, so the CSP's `font-src 'self'` still holds.
+ * Two faces: one grotesk for everything, one mono for annotation. Both are
+ * self-hosted by `next/font` at build time, so the CSP's `font-src 'self'`
+ * still holds.
+ *
+ * Inter Tight stands in for a licensed grotesk (Founders Grotesk is the
+ * reference): tight caps, a light weight that reads well large. Swapping it
+ * is one line here once a licence is in hand.
  */
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
+const grotesk = Inter_Tight({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-grotesk",
+  display: "swap",
+});
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-mono-face",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: { default: "UX Disrupt — a design research library", template: "%s — UX Disrupt" },
+  title: {
+    default: "Stealth.design | Website inspiration",
+    template: "%s | Stealth.design",
+  },
   description:
-    "UX Disrupt is a reference library of captured product interfaces, organised by pattern, page type and product.",
-  applicationName: "UX Disrupt",
+    "The best first impressions on the web, from real companies. Find ideas, then visit the real site.",
+  applicationName: "Stealth.design",
   // Deliberate for this build. See `robots.ts` for the reasoning.
   robots: { index: false, follow: false },
 };
 
-/** The public shell. Dark, always: see `globals.css`. */
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+/** The public shell: header, page, footer. */
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" className={cn("dark", geist.variable, geistMono.variable)}>
-      {/* Browser extensions (ColorZilla, Grammarly, password managers) write
-          attributes onto <body> before React hydrates. This ignores attribute
-          differences on this one element only — not its children. */}
-      <body className="flex min-h-dvh flex-col" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(grotesk.variable, mono.variable)}
+    >
+      <body className="min-h-dvh" suppressHydrationWarning>
         <Providers>
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main>{children}</main>
           <SiteFooter />
         </Providers>
       </body>

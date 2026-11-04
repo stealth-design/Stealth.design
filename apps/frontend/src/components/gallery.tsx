@@ -1,19 +1,23 @@
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import type { PublicContentSummary, PublicMedia, PublicSourceSummary } from "@uxd/api/client";
-import type { Slide } from "@/components/viewer";
-import { displayUrl } from "@/lib/format";
-import { stageSrcSet, thumbSrc } from "@/lib/media";
+import { Children } from "react";
+import type {
+  PublicContentSummary,
+  PublicMedia,
+  PublicSourceSummary,
+} from "@uxd/api/client";
+import { Reveal } from "@/components/reveal";
+import { displayUrl, humanise } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
- * The room around the screens: page intros, contact sheets, product rows,
- * quiet filters and lists. Presentation only — pages fetch, these render.
+ * The pieces every page is built from, all on the page grid.
+ *
+ * Presentation only: pages fetch from the public API and hand plain records
+ * to these. Nothing here fetches, and nothing here knows which page it is on.
  */
 
-/** The page's width and gutters. */
-export function Room({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("mx-auto max-w-[1600px] px-5 md:px-8", className)}>{children}</div>;
-}
+// --- Page furniture -------------------------------------------------------
 
 export interface Crumb {
   readonly label: string;
@@ -21,226 +25,486 @@ export interface Crumb {
 }
 
 /**
- * A page's opening, kept small: where you are, what this is, how many.
- * Nothing here is large — the largest thing on any page is a screenshot.
+ * The top of a page: a title in capitals on the left, the mono note that
+ * explains it on the right, both sitting on the same baseline — the way the
+ * page states what it is before showing anything.
  */
-export function PageIntro({
+export function PageHeader({
   title,
-  count,
-  description,
+  label,
+  note,
+  actions,
   crumbs,
-  children,
 }: {
   title: string;
-  count?: string;
-  description?: React.ReactNode;
+  label?: string;
+  note?: React.ReactNode;
+  actions?: React.ReactNode;
   crumbs?: readonly Crumb[];
-  children?: React.ReactNode;
 }) {
   return (
-    <Room className="pt-10 pb-10 md:pt-14">
+    <header className="page-grid gap-y-6 pt-16 pb-14 md:pt-24 md:pb-20">
       {crumbs ? (
-        <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap gap-x-2 text-[12px] text-faint">
+        <nav
+          aria-label="Breadcrumb"
+          className="t-label col-span-full flex flex-wrap gap-x-2 text-muted-foreground"
+        >
           {crumbs.map((crumb, index) => (
             <span key={`${crumb.label}-${index}`} className="flex gap-x-2">
               {index > 0 ? <span aria-hidden>/</span> : null}
               {crumb.href ? (
-                <Link href={crumb.href} className="transition-colors hover:text-lit">
+                <Link
+                  href={crumb.href}
+                  className="transition-colors hover:text-foreground"
+                >
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="text-dim">{crumb.label}</span>
+                <span className="text-foreground">{crumb.label}</span>
               )}
             </span>
           ))}
         </nav>
       ) : null}
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h1 className="text-[20px] font-medium tracking-[-0.015em] text-lit">{title}</h1>
-        {count ? <span className="num text-[12px] text-faint">{count}</span> : null}
-      </div>
-      {description ? <div className="mt-2 max-w-xl text-[13px] leading-relaxed text-dim">{description}</div> : null}
-      {children ? <div className="mt-6">{children}</div> : null}
-    </Room>
+      <Reveal className="col-span-full md:col-span-8">
+        {label ? (
+          <p className="t-label mb-5 text-muted-foreground">{label}</p>
+        ) : null}
+        <h1 className="t-display break-words">{title}</h1>
+      </Reveal>
+      {note || actions ? (
+        <Reveal
+          delay={0.05}
+          className="col-span-full flex flex-col gap-6 self-end md:col-span-4 md:col-start-9"
+        >
+          {note ? (
+            <div className="t-note max-w-md text-muted-foreground">{note}</div>
+          ) : null}
+          {actions ? (
+            <div className="flex flex-wrap items-center gap-2">{actions}</div>
+          ) : null}
+        </Reveal>
+      ) : null}
+    </header>
   );
 }
 
-/** A section's label row inside a page. */
-export function SectionLabel({
+/** A section's opening: the same title-left, note-right composition, smaller. */
+export function SectionHeader({
   title,
-  count,
+  note,
   href,
-  hrefLabel = "View all",
+  hrefLabel = "See all",
 }: {
   title: string;
-  count?: number;
+  note?: React.ReactNode;
   href?: string;
   hrefLabel?: string;
 }) {
   return (
-    <div className="mb-5 flex items-baseline gap-3">
-      <h2 className="text-[13px] font-medium text-lit">{title}</h2>
-      {count !== undefined ? <span className="num text-[12px] text-faint">{count}</span> : null}
-      {href ? (
-        <Link href={href} className="ml-auto text-[12px] text-dim transition-colors hover:text-lit">
-          {hrefLabel} →
-        </Link>
-      ) : null}
+    <div className="page-grid mb-10 gap-y-5 md:mb-14">
+      <h2 className="t-h2 col-span-full md:col-span-7">{title}</h2>
+      <div className="col-span-full flex items-end justify-between gap-6 self-end md:col-span-4 md:col-start-9">
+        {note ? (
+          <p className="t-note max-w-sm text-muted-foreground">{note}</p>
+        ) : (
+          <span />
+        )}
+        {href ? (
+          <Link
+            href={href}
+            className="t-note group inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap"
+          >
+            {hrefLabel}
+            <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
+        ) : null}
+      </div>
     </div>
+  );
+}
+
+/** The full-width black bar that ends a section: "see all …". */
+export function SeeAllBar({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group mt-16 flex h-20 items-center justify-center gap-3 bg-ink text-ink-foreground md:mt-20"
+    >
+      <span className="t-note text-[clamp(1rem,1.6vw,1.5rem)]">{children}</span>
+      <ArrowRight className="size-5 text-brand transition-transform group-hover:translate-x-1" />
+    </Link>
   );
 }
 
 // --- Screenshots ----------------------------------------------------------
 
+const SHOT_SIZES = "(max-width: 768px) 100vw, 1360px";
+
+/** A card's rendered width: one column on phones, then two, then three. */
+const CARD_SIZES = "(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 34vw";
+
 /**
- * One screenshot. Frames crop to 16:10 from the top so a sheet stays calm;
- * `full` keeps the capture's own proportions.
+ * The whole-page renditions, ascending, as a srcset. The original master is
+ * excluded: a lossless PNG that can run to many megabytes.
+ */
+function uncroppedSrcSet(media: PublicMedia): string | undefined {
+  const originalWidth = media.width ?? null;
+  const candidates: { url: string; width: number }[] = [];
+  const seen = new Set<number>();
+
+  for (const [url, cap] of [
+    [media.previewUrl, 1024],
+    [media.largeUrl, 2048],
+  ] as const) {
+    if (!url) continue;
+    const width = originalWidth === null ? cap : Math.min(cap, originalWidth);
+    if (seen.has(width)) continue;
+    seen.add(width);
+    candidates.push({ url, width });
+  }
+
+  if (candidates.length < 2) return undefined;
+  return candidates
+    .sort((a, b) => a.width - b.width)
+    .map((c) => `${c.url} ${c.width}w`)
+    .join(", ");
+}
+
+/**
+ * One screenshot.
+ *
+ * Tiles crop to a fixed ratio from the top, so a grid stays calm across
+ * captures of different shapes; `full` keeps the capture's own proportions.
+ *
+ * Tiles are cropped by CSS, not by using the stored thumbnail: that is only
+ * 480px wide, which a card on a high-density screen shows at nearly twice its
+ * size — visibly soft. The 1024px and 2048px renditions are offered instead
+ * and the browser picks by the card's width. The thumbnail is only a last
+ * resort, and never joins the srcset, because srcset candidates must be the
+ * same picture at different resolutions.
  */
 export function Shot({
   media,
   title,
+  size = "thumb",
+  ratio = "16 / 10",
   full = false,
   priority = false,
   className,
 }: {
   media: PublicMedia | null;
   title: string;
+  size?: "thumb" | "preview" | "full";
+  ratio?: string;
   full?: boolean;
   priority?: boolean;
   className?: string;
 }) {
   if (!media) {
     return (
-      <div className={cn("flex aspect-[16/10] items-center justify-center bg-shot text-[12px] text-faint", className)}>
-        No screenshot
+      <div
+        className={cn(
+          "t-label flex items-center justify-center bg-shot text-muted-foreground",
+          className,
+        )}
+        style={{ aspectRatio: ratio }}
+      >
+        Image coming soon
       </div>
     );
   }
-  const srcSet = full ? stageSrcSet(media) : undefined;
+
+  const cropped = size === "thumb";
+  const srcSet = uncroppedSrcSet(media);
+  const src = cropped
+    ? (media.previewUrl ?? media.largeUrl ?? media.thumbnailUrl ?? media.url)
+    : (media.largeUrl ?? media.previewUrl ?? media.url);
+
+  const style =
+    full && media.width && media.height
+      ? { aspectRatio: `${media.width} / ${media.height}` }
+      : { aspectRatio: ratio };
+
+  const isPortrait =
+    !full &&
+    !cropped &&
+    media.width !== null &&
+    media.height !== null &&
+    media.height > media.width * 1.2;
+
   return (
+    // A plain <img>: these come from the CMS's media origin at known sizes,
+    // and an optimiser hop would add latency for no gain.
     // eslint-disable-next-line @next/next/no-img-element
     <img
       className={cn("shot-img", className)}
-      style={full && media.width && media.height ? { aspectRatio: `${media.width} / ${media.height}` } : { aspectRatio: "16 / 10" }}
-      src={full ? (media.largeUrl ?? media.previewUrl ?? media.url) : thumbSrc(media)}
+      data-portrait={isPortrait ? "true" : undefined}
+      style={style}
+      src={src}
       srcSet={srcSet}
-      sizes={srcSet ? "(max-width: 768px) 100vw, 1500px" : undefined}
+      sizes={srcSet ? (cropped ? CARD_SIZES : SHOT_SIZES) : undefined}
       alt={media.altText ?? `Screenshot of ${title}`}
       width={media.width ?? undefined}
       height={media.height ?? undefined}
       loading={priority ? "eager" : "lazy"}
       decoding="async"
+      fetchPriority={priority ? "high" : "auto"}
     />
   );
 }
 
-// --- Screens as slides ----------------------------------------------------
+/** The one label allowed on an image: white, square-cornered, top right. */
+function Tag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="absolute top-3 right-3 rounded-[4px] bg-white px-2 py-1 text-[15px] leading-none font-medium tracking-[-0.01em] text-black">
+      {children}
+    </span>
+  );
+}
 
-export function entryHref(item: PublicContentSummary): string {
+// --- Cards ----------------------------------------------------------------
+
+function entryHref(item: PublicContentSummary): string {
   return item.kind === "flow" ? `/flow/${item.slug}` : `/entry/${item.slug}`;
 }
 
-/** "Screen name, state" — the dim half of a caption. */
-export function screenSubtitle(item: PublicContentSummary): string {
-  return [item.title, item.stateLabel].filter(Boolean).join(", ");
-}
-
-/** A record as a slide for the viewer: the product lit, the screen dim. */
-export function toSlide(item: PublicContentSummary): Slide {
-  return {
-    id: item.id,
-    href: entryHref(item),
-    title: item.source?.name ?? item.title,
-    subtitle: item.source ? screenSubtitle(item) : item.stateLabel,
-    media: item.primaryMedia,
-  };
-}
-
-// --- The contact sheet ----------------------------------------------------
-
 /**
- * Screens as a contact sheet: numbered frames at a dimmed exposure that come
- * up to full brightness under the pointer. The numbers run on across pages,
- * so frame 031 on page two is frame 031 everywhere.
+ * A website's logo, as a small rounded tile. Without one, the first letter
+ * of its name stands in, so every card keeps the same shape.
  */
-export function ContactSheet({
-  items,
-  numberFrom = 1,
-  showSource = true,
-  size = "md",
+export function SiteLogo({
+  source,
+  size = 24,
+  className,
 }: {
-  items: readonly PublicContentSummary[];
-  numberFrom?: number;
-  showSource?: boolean;
-  size?: "md" | "lg";
+  source: Pick<PublicSourceSummary, "name" | "logoUrl">;
+  size?: number;
+  className?: string;
 }) {
+  const frame = cn(
+    "flex shrink-0 items-center justify-center overflow-hidden rounded-[6px] border bg-white",
+    className,
+  );
+  if (source.logoUrl) {
+    // Square for an app icon, wider for a wordmark: the height is fixed and
+    // the width follows the image, up to a limit.
+    return (
+      <span
+        className={cn(frame, "px-[3px]")}
+        style={{ height: size, minWidth: size, maxWidth: size * 4 }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={source.logoUrl}
+          alt=""
+          className="h-[calc(100%-6px)] w-auto max-w-full object-contain"
+          loading="lazy"
+          decoding="async"
+        />
+      </span>
+    );
+  }
   return (
-    <ol
+    <span
+      aria-hidden
       className={cn(
-        "grid gap-x-4 gap-y-8",
-        size === "md" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+        frame,
+        "bg-muted font-medium text-muted-foreground uppercase",
       )}
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.5) }}
     >
-      {items.map((item, index) => (
-        <li key={item.id}>
-          <Link href={entryHref(item)} className="group block" aria-label={item.title}>
-            <div className="overflow-hidden rounded-[4px] opacity-75 ring-1 ring-white/[0.06] transition-all duration-300 group-hover:opacity-100 group-hover:ring-white/15">
-              <Shot media={item.primaryMedia} title={item.title} priority={index < 4} />
-            </div>
-            <div className="mt-2.5 flex items-baseline gap-2.5 text-[12px]">
-              <span className="num text-faint">{String(numberFrom + index).padStart(3, "0")}</span>
-              <span className="min-w-0 truncate text-dim transition-colors group-hover:text-lit">
-                {showSource && item.source ? <span className="text-lit/80">{item.source.name} </span> : null}
-                {screenSubtitle(item)}
-              </span>
-            </div>
-          </Link>
-        </li>
-      ))}
-    </ol>
+      {source.name.trim().charAt(0) || "?"}
+    </span>
   );
 }
 
 /**
- * A product as a row: its name and a strip of its frames. The strip runs off
- * the edge when there are more than fit, like a roll of film.
+ * The website's own address, opened in a new tab. `nofollow` because a
+ * library linking out at scale should not hand out ranking it did not intend
+ * to; `noopener` so the opened site cannot reach back into this tab.
  */
-export function ProductRow({
-  source,
-  count,
-  items,
+function ViewWebsite({
+  href,
+  className,
 }: {
-  source: PublicSourceSummary;
-  count: number;
-  items: readonly PublicContentSummary[];
+  href: string;
+  className?: string;
 }) {
   return (
-    <section className="border-t border-white/[0.06] py-8">
-      <Room className="mb-4 flex items-baseline gap-3">
-        <Link href={`/sources/${source.slug}`} className="text-[15px] font-medium text-lit hover:opacity-70">
-          {source.name}
+    <a
+      href={href}
+      target="_blank"
+      rel="nofollow noopener noreferrer"
+      className={cn(
+        "inline-flex h-8 items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-medium tracking-[-0.01em] text-black shadow-[0_4px_16px_rgba(0,0,0,0.18)] transition hover:bg-neutral-100",
+        className,
+      )}
+    >
+      View website
+      <ArrowUpRight aria-hidden className="size-3.5" />
+    </a>
+  );
+}
+
+/**
+ * A screen, as a card: the screenshot in a soft frame, and the website it
+ * came from underneath — logo on the left, then its name.
+ *
+ * Hovering the card brings up "View website", which goes to the site itself.
+ * On touch screens, where nothing hovers, it is always shown. The screenshot
+ * and the "View website" button are separate links side by side, never one
+ * inside the other.
+ */
+export function ScreenCard({
+  item,
+  priority = false,
+  showSource = true,
+}: {
+  item: PublicContentSummary;
+  priority?: boolean;
+  showSource?: boolean;
+}) {
+  const href = entryHref(item);
+  const source = item.source;
+  const website = source?.websiteUrl ?? null;
+  const name = showSource && source ? source.name : item.title;
+  const aside = item.deviceClass === "mobile" ? "Mobile" : null;
+
+  return (
+    <article className="group rounded-xl border bg-card p-1.5 transition-colors duration-300 hover:border-foreground/20">
+      <div className="relative overflow-hidden rounded-[9px] bg-shot">
+        <Link
+          href={href}
+          aria-label={`${name}, ${item.title}`}
+          className="block"
+        >
+          <Shot
+            media={item.primaryMedia}
+            title={item.title}
+            priority={priority}
+            className="transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+          />
         </Link>
-        {source.domain ? <span className="text-[12px] text-faint">{source.domain}</span> : null}
-        <span className="num ml-auto text-[12px] text-faint">{count === 1 ? "1 screen" : `${count} screens`}</span>
-        <Link href={`/sources/${source.slug}`} className="text-[12px] text-dim hover:text-lit">
-          Open →
-        </Link>
-      </Room>
-      <div className="no-scrollbar overflow-x-auto">
-        <ol className="flex w-max gap-3 px-5 md:px-8">
-          {items.map((item) => (
-            <li key={item.id} className="w-[260px] md:w-[320px]">
-              <Link href={entryHref(item)} className="group block" aria-label={item.title}>
-                <div className="overflow-hidden rounded-[4px] opacity-75 ring-1 ring-white/[0.06] transition-all duration-300 group-hover:opacity-100 group-hover:ring-white/15">
-                  <Shot media={item.primaryMedia} title={item.title} />
-                </div>
-                <p className="mt-2 truncate text-[12px] text-dim group-hover:text-lit">{screenSubtitle(item)}</p>
-              </Link>
-            </li>
-          ))}
-        </ol>
+        {item.kind === "flow" ? <Tag>Flow</Tag> : null}
+        {website ? (
+          <>
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            />
+            <ViewWebsite
+              href={website}
+              className="absolute right-3 bottom-3 translate-y-1.5 opacity-0 duration-300 group-hover:translate-y-0 group-hover:opacity-100 focus-visible:translate-y-0 focus-visible:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:opacity-100"
+            />
+          </>
+        ) : null}
       </div>
-    </section>
+
+      <div className="flex items-center gap-2.5 px-1.5 pt-3 pb-1.5">
+        {showSource && source ? <SiteLogo source={source} size={24} /> : null}
+        <h3 className="min-w-0 flex-1 truncate text-[15px] leading-tight font-medium tracking-[-0.015em]">
+          {showSource && source ? (
+            <Link
+              href={`/sources/${source.slug}`}
+              className="transition-opacity hover:opacity-60"
+            >
+              {name}
+            </Link>
+          ) : (
+            <Link href={href} className="transition-opacity hover:opacity-60">
+              {name}
+            </Link>
+          )}
+        </h3>
+        {aside ? (
+          <span className="t-label shrink-0 text-muted-foreground">
+            {aside}
+          </span>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+/** A product: its most recent capture, large, with the name and domain below. */
+export function ProductCard({
+  source,
+  cover,
+  count,
+  priority = false,
+}: {
+  source: PublicSourceSummary;
+  cover: PublicMedia | null;
+  count: number;
+  priority?: boolean;
+}) {
+  return (
+    <article className="group">
+      <Link
+        href={`/sources/${source.slug}`}
+        className="relative block overflow-hidden rounded-lg"
+      >
+        <Shot
+          media={cover}
+          title={source.name}
+          priority={priority}
+          className="transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+        />
+        <Tag>{humanise(source.type)}</Tag>
+      </Link>
+      <div className="mt-4 flex items-baseline justify-between gap-4">
+        <h3 className="t-card">
+          <Link
+            href={`/sources/${source.slug}`}
+            className="transition-opacity hover:opacity-60"
+          >
+            {source.name}
+          </Link>
+        </h3>
+        <p className="t-label shrink-0 text-muted-foreground">
+          {count === 1 ? "1 screen" : `${count} screens`}
+        </p>
+      </div>
+      {source.domain ? (
+        <p className="t-label mt-1 text-muted-foreground">{source.domain}</p>
+      ) : null}
+    </article>
+  );
+}
+
+/**
+ * Cards on the page grid. `columns` is how many cards share a row at
+ * desktop: 2 (six columns each), 3 (four) or 4 (three).
+ */
+export function CardGrid({
+  children,
+  columns = 3,
+}: {
+  children: React.ReactNode;
+  columns?: 2 | 3 | 4;
+}) {
+  const span = { 2: "md:col-span-6", 3: "md:col-span-4", 4: "md:col-span-3" }[
+    columns
+  ];
+  return (
+    <div className="page-grid gap-y-14 md:gap-y-16">
+      {Children.map(children, (child, index) => (
+        <Reveal
+          key={index}
+          delay={(index % columns) * 0.04}
+          className={cn(columns === 4 ? "col-span-2" : "col-span-full", span)}
+        >
+          {child}
+        </Reveal>
+      ))}
+    </div>
   );
 }
 
@@ -254,12 +518,14 @@ export interface FilterOption {
   readonly title?: string;
 }
 
-/** Filters as quiet text: the one that is on is lit, the rest are dim. */
-export function Filters({ label, options }: { label?: string; options: readonly FilterOption[] }) {
+/**
+ * Filters as outlined tags: square-cornered, in capitals, filled black when
+ * on. Links, so every filtered view is a URL that works without JavaScript.
+ */
+export function Filters({ options }: { options: readonly FilterOption[] }) {
   if (options.length === 0) return null;
   return (
-    <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
-      {label ? <span className="mr-2 text-[12px] text-faint">{label}</span> : null}
+    <div className="flex flex-wrap gap-2">
       {options.map((option) => (
         <Link
           key={option.href + option.label}
@@ -267,12 +533,18 @@ export function Filters({ label, options }: { label?: string; options: readonly 
           title={option.title}
           aria-current={option.active ? "true" : undefined}
           className={cn(
-            "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[13px] transition-colors",
-            option.active ? "bg-accent text-lit" : "text-dim hover:text-lit",
+            "inline-flex h-9 items-center gap-2 rounded-[6px] border px-3 text-[15px] tracking-[-0.01em] uppercase transition-colors",
+            option.active
+              ? "border-foreground bg-foreground text-background"
+              : "border-foreground/80 hover:bg-foreground hover:text-background",
           )}
         >
           {option.label}
-          {option.count !== undefined ? <span className="num text-[11px] text-faint">{option.count}</span> : null}
+          {option.count !== undefined ? (
+            <span className="font-mono text-[11px] tabular-nums opacity-60">
+              {option.count.toLocaleString("en-US")}
+            </span>
+          ) : null}
         </Link>
       ))}
     </div>
@@ -281,22 +553,25 @@ export function Filters({ label, options }: { label?: string; options: readonly 
 
 // --- Metadata -------------------------------------------------------------
 
-/** Label and value rows, for the details panel. */
+/** Key and value pairs, as mono labels over plain values. */
 export function Facts({
   items,
 }: {
   items: readonly { label: string; value: React.ReactNode | string | null }[];
 }) {
   const present = items.filter(
-    (item) => item.value !== null && item.value !== undefined && item.value !== "",
+    (item) =>
+      item.value !== null && item.value !== undefined && item.value !== "",
   );
   if (present.length === 0) return null;
   return (
-    <dl className="divide-y divide-white/[0.06] text-[13px]">
+    <dl className="grid grid-cols-2 gap-x-6 gap-y-6">
       {present.map((item) => (
-        <div key={item.label} className="flex gap-4 py-2.5">
-          <dt className="w-24 shrink-0 text-faint">{item.label}</dt>
-          <dd className="min-w-0 break-words text-lit">{item.value}</dd>
+        <div key={item.label} className="min-w-0">
+          <dt className="t-label text-muted-foreground">{item.label}</dt>
+          <dd className="mt-1.5 text-[17px] font-light break-words">
+            {item.value}
+          </dd>
         </div>
       ))}
     </dl>
@@ -304,10 +579,10 @@ export function Facts({
 }
 
 /**
- * Where an image came from. (When it was captured is kept for the team and
- * deliberately not shown.) These are other people's interfaces,
- * and provenance is part of the record. `nofollow` because a library linking
- * out at scale should not hand out ranking it did not intend to.
+ * Where an image came from. On every entry and flow: these are
+ * other people's interfaces, and provenance is part of the record.
+ * `nofollow` because a library linking out at scale should not hand out
+ * ranking it did not intend to.
  */
 export function Provenance({
   sourceUrl,
@@ -318,69 +593,105 @@ export function Provenance({
 }) {
   const shown = displayUrl(sourceUrl);
   return (
-    <p className="text-[12px] leading-relaxed text-faint">
+    <p className="t-label text-muted-foreground">
       {shown ? (
         <>
-          Captured from{" "}
+          From{" "}
           {sourceUrl ? (
-            <a href={sourceUrl} rel="nofollow noreferrer" className="text-dim underline underline-offset-4 hover:text-lit">
+            <a
+              href={sourceUrl}
+              rel="nofollow noreferrer"
+              className="text-foreground underline underline-offset-4"
+            >
               {shown}
             </a>
           ) : (
             shown
           )}
         </>
-      ) : (
-        "Source URL not recorded"
-      )}
+      ) : null}
       {attribution ? ` · ${attribution}` : null}
     </p>
   );
 }
 
-/** Nothing to show: said quietly, in the middle of the room. */
-export function EmptyState({ title, children, action }: { title: string; children?: React.ReactNode; action?: React.ReactNode }) {
+/** Nothing to show: said plainly, at the size of a section title. */
+export function EmptyState({
+  title,
+  children,
+  action,
+}: {
+  title: string;
+  children?: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
-    <Room className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-      <p className="text-[15px] text-lit">{title}</p>
-      {children ? <div className="mt-2 max-w-sm text-[13px] leading-relaxed text-dim">{children}</div> : null}
-      {action ? <div className="mt-6">{action}</div> : null}
-    </Room>
+    <div className="page-grid">
+      <div className="col-span-full border-t pt-10 pb-24 md:col-span-8">
+        <p className="t-h2">{title}</p>
+        {children ? (
+          <div className="t-note mt-6 max-w-lg text-muted-foreground">
+            {children}
+          </div>
+        ) : null}
+        {action ? <div className="mt-8">{action}</div> : null}
+      </div>
+    </div>
   );
 }
 
-/** Previous · page N of M · next. */
-export function Pager({ page, totalPages, href }: { page: number; totalPages: number; href: (page: number) => string }) {
+/** Previous, page N of M, next — as text, on the grid. */
+export function Pager({
+  page,
+  totalPages,
+  href,
+}: {
+  page: number;
+  totalPages: number;
+  href: (page: number) => string;
+}) {
   if (totalPages <= 1) return null;
   return (
-    <Room className="mt-16 flex items-center justify-center gap-6 text-[13px]">
-      {page > 1 ? (
-        <Link href={href(page - 1)} className="text-dim hover:text-lit">
-          ← Previous
-        </Link>
-      ) : (
-        <span className="text-faint">← Previous</span>
-      )}
-      <span className="num text-[12px] text-faint">
-        {page} / {totalPages}
-      </span>
-      {page < totalPages ? (
-        <Link href={href(page + 1)} className="text-dim hover:text-lit">
-          Next →
-        </Link>
-      ) : (
-        <span className="text-faint">Next →</span>
-      )}
-    </Room>
+    <nav className="page-grid mt-20 items-center" aria-label="Pages">
+      <div className="col-span-1 md:col-span-4">
+        {page > 1 ? (
+          <Link
+            href={href(page - 1)}
+            className="t-nav inline-flex items-center gap-2 hover:opacity-60"
+          >
+            <ArrowLeft className="size-4" /> Previous
+          </Link>
+        ) : null}
+      </div>
+      <p className="t-label col-span-2 text-center text-muted-foreground md:col-span-4">
+        Page {page} of {totalPages}
+      </p>
+      <div className="col-span-1 text-right md:col-span-4">
+        {page < totalPages ? (
+          <Link
+            href={href(page + 1)}
+            className="t-nav inline-flex items-center gap-2 hover:opacity-60"
+          >
+            Next <ArrowRight className="size-4" />
+          </Link>
+        ) : null}
+      </div>
+    </nav>
   );
 }
 
-/** The one filled button: light on dark. */
-export function LightLink({ href, children }: { href: string; children: React.ReactNode }) {
+/** The black block button. */
+export function BlockLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
     <Link
       href={href}
-      className="inline-flex h-9 items-center gap-2 rounded-md bg-lit px-3.5 text-[13px] font-medium text-background transition-opacity hover:opacity-85"
+      className="t-nav inline-flex h-11 items-center gap-2 rounded-[4px] bg-ink px-4 text-ink-foreground transition-opacity hover:opacity-80"
     >
       {children}
     </Link>

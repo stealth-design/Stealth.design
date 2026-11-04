@@ -65,6 +65,52 @@ export function publishedContentCondition(): SQL {
 }
 
 /** Media a public response may reference: ready, not archived, not deleted. */
+/** The website columns every public read selects. */
+const publicSourceColumns = {
+  id: sources.id,
+  name: sources.name,
+  slug: sources.slug,
+  domain: sources.domain,
+  companyName: sources.companyName,
+  productName: sources.productName,
+  type: sources.type,
+  module: sources.module,
+  canonicalUrl: sources.canonicalUrl,
+  logoMediaId: sources.logoMediaId,
+};
+
+/**
+ * Resolves websites' logos to public URLs, in one batch.
+ *
+ * The `preview` rendition, not the thumbnail: thumbnails are cropped to the
+ * card's shape, which would cut a square logo. SVG never gets a URL — it is
+ * not served inline from our origin (see the public media route).
+ */
+async function buildLogoResolver(
+  db: Db,
+  storage: StorageDriver,
+  logoMediaIds: readonly (string | null | undefined)[],
+  options: MediaUrlOptions = {},
+): Promise<(mediaId: string | null | undefined) => string | null> {
+  const ids = [...new Set(logoMediaIds.filter((id): id is string => !!id))];
+  if (ids.length === 0) return () => null;
+  const usable = await db
+    .select({ id: mediaAssets.id })
+    .from(mediaAssets)
+    .where(and(inArray(mediaAssets.id, ids), publicMediaCondition(), sql`${mediaAssets.mimeType} <> 'image/svg+xml'`));
+  const resolve = await buildMediaUrlResolver(
+    db,
+    storage,
+    usable.map((row) => row.id),
+    options,
+  );
+  return (mediaId) => {
+    if (!mediaId) return null;
+    const urls = resolve(mediaId);
+    return urls ? (urls.previewUrl ?? urls.originalUrl) || null : null;
+  };
+}
+
 function publicMediaCondition(): SQL {
   return and(
     eq(mediaAssets.status, "ready"),
@@ -308,16 +354,7 @@ export async function listPublicContent(
         // Left-joined rather than filtered: the same list serves pages, flows
         // and screens, and only screens have a state.
         stateLabel: screenDetails.stateLabel,
-        source: {
-          id: sources.id,
-          name: sources.name,
-          slug: sources.slug,
-          domain: sources.domain,
-          companyName: sources.companyName,
-          productName: sources.productName,
-          type: sources.type,
-          module: sources.module,
-        },
+        source: publicSourceColumns,
       })
       .from(contentItems)
       .leftJoin(screenDetails, eq(screenDetails.contentItemId, contentItems.id))
@@ -330,15 +367,18 @@ export async function listPublicContent(
   ]);
 
   const mediaIds = rows.map((r) => r.content.primaryMediaId).filter((id): id is string => id !== null);
-  const resolveUrls = await buildMediaUrlResolver(db, storage, mediaIds, options);
-  const mediaRows = await loadPublicMedia(db, mediaIds);
+  const [resolveUrls, mediaRows, resolveLogo] = await Promise.all([
+    buildMediaUrlResolver(db, storage, mediaIds, options),
+    loadPublicMedia(db, mediaIds),
+    buildLogoResolver(db, storage, rows.map((r) => r.source?.logoMediaId), options),
+  ]);
 
   return {
     items: rows.map((row) =>
       serialiseContentSummary(
         { ...row.content, stateLabel: row.stateLabel },
         {
-          source: row.source?.id ? serialiseSource(row.source) : null,
+          source: row.source?.id ? serialiseSource(row.source, resolveLogo) : null,
           primaryMedia: row.content.primaryMediaId
             ? buildMedia(mediaRows, row.content.primaryMediaId, resolveUrls)
             : null,
@@ -406,16 +446,7 @@ export async function getPublicContent(
     .select({
       content: contentItems,
       screen: screenDetails,
-      source: {
-        id: sources.id,
-        name: sources.name,
-        slug: sources.slug,
-        domain: sources.domain,
-        companyName: sources.companyName,
-        productName: sources.productName,
-        type: sources.type,
-        module: sources.module,
-      },
+      source: publicSourceColumns,
     })
     .from(contentItems)
     .leftJoin(screenDetails, eq(screenDetails.contentItemId, contentItems.id))
@@ -522,9 +553,10 @@ export async function getPublicContent(
     ]),
   ];
 
-  const [mediaRows, resolveUrls] = await Promise.all([
+  const [mediaRows, resolveUrls, resolveLogo] = await Promise.all([
     loadPublicMedia(db, allMediaIds),
     buildMediaUrlResolver(db, storage, allMediaIds, options),
+    buildLogoResolver(db, storage, [row.source?.logoMediaId], options),
   ]);
 
   // One entry per *file*, not per usage row.
@@ -565,7 +597,7 @@ export async function getPublicContent(
           deviceScaleFactor: row.screen.deviceScaleFactor,
         }
       : null,
-    source: row.source?.id ? serialiseSource(row.source) : null,
+    source: row.source?.id ? serialiseSource(row.source, resolveLogo) : null,
     primaryMedia: content.primaryMediaId
       ? buildMedia(mediaRows, content.primaryMediaId, resolveUrls)
       : null,
@@ -611,16 +643,7 @@ export async function getPublicFlow(
     .select({
       content: contentItems,
       detail: flowDetails,
-      source: {
-        id: sources.id,
-        name: sources.name,
-        slug: sources.slug,
-        domain: sources.domain,
-        companyName: sources.companyName,
-        productName: sources.productName,
-        type: sources.type,
-        module: sources.module,
-      },
+      source: publicSourceColumns,
     })
     .from(contentItems)
     .leftJoin(flowDetails, eq(flowDetails.contentItemId, contentItems.id))
@@ -640,9 +663,10 @@ export async function getPublicFlow(
   const mediaIds = steps
     .map((s) => s.content.primaryMediaId)
     .filter((id): id is string => id !== null);
-  const [mediaRows, resolveUrls] = await Promise.all([
+  const [mediaRows, resolveUrls, resolveLogo] = await Promise.all([
     loadPublicMedia(db, mediaIds),
     buildMediaUrlResolver(db, storage, mediaIds, options),
+    buildLogoResolver(db, storage, [row.source?.logoMediaId], options),
   ]);
 
   return serialiseFlowDetail(
@@ -658,7 +682,7 @@ export async function getPublicFlow(
       deletedAt: row.content.deletedAt,
     },
     {
-      source: row.source?.id ? serialiseSource(row.source) : null,
+      source: row.source?.id ? serialiseSource(row.source, resolveLogo) : null,
       steps: steps.map((s) => ({
         position: s.step.position,
         label: s.step.label,
@@ -685,6 +709,7 @@ export async function getPublicFlow(
 export async function listPublicSources(
   db: Db,
   query: { readonly module?: string; readonly page: number; readonly pageSize: number },
+  media?: { readonly storage: StorageDriver; readonly options?: MediaUrlOptions },
 ) {
   const hasPublished = sql`exists (
     select 1 from ${contentItems} ci
@@ -701,14 +726,7 @@ export async function listPublicSources(
   const [rows, countRows] = await Promise.all([
     db
       .select({
-        id: sources.id,
-        name: sources.name,
-        slug: sources.slug,
-        domain: sources.domain,
-        companyName: sources.companyName,
-        productName: sources.productName,
-        type: sources.type,
-        module: sources.module,
+        ...publicSourceColumns,
         publishedCount: sql<number>`(
           select count(*)::int from ${contentItems} ci
           where ci.source_id = ${sources}.id
@@ -725,25 +743,24 @@ export async function listPublicSources(
     db.select({ n: sql<number>`count(*)::int` }).from(sources).where(where),
   ]);
 
+  const resolveLogo = media
+    ? await buildLogoResolver(db, media.storage, rows.map((row) => row.logoMediaId), media.options)
+    : undefined;
   return {
-    items: rows.map((row) => ({ ...serialiseSource(row), publishedCount: row.publishedCount })),
+    items: rows.map((row) => ({ ...serialiseSource(row, resolveLogo), publishedCount: row.publishedCount })),
     total: countRows[0]?.n ?? 0,
   };
 }
 
-export async function getPublicSource(db: Db, slug: string) {
+export async function getPublicSource(
+  db: Db,
+  slug: string,
+  media?: { readonly storage: StorageDriver; readonly options?: MediaUrlOptions },
+) {
   const [row] = await db
     .select({
-      id: sources.id,
-      name: sources.name,
-      slug: sources.slug,
-      domain: sources.domain,
-      canonicalUrl: sources.canonicalUrl,
-      companyName: sources.companyName,
-      productName: sources.productName,
+      ...publicSourceColumns,
       description: sources.description,
-      type: sources.type,
-      module: sources.module,
       attribution: sources.attribution,
       deletedAt: sources.deletedAt,
     })
@@ -752,8 +769,11 @@ export async function getPublicSource(db: Db, slug: string) {
     .limit(1);
 
   if (!row) return null;
+  const resolveLogo = media
+    ? await buildLogoResolver(db, media.storage, [row.logoMediaId], media.options)
+    : undefined;
   return {
-    ...serialiseSource(row),
+    ...serialiseSource(row, resolveLogo),
     description: row.description,
     canonicalUrl: row.canonicalUrl,
     attribution: row.attribution,
@@ -934,6 +954,34 @@ export async function findPublicMediaByKey(
     return { mimeType: asset.mimeType, byteSize: asset.byteSize, isDerivative: false };
   }
 
+  // A website's logo, while the website has work on show. Taking a website
+  // down unpublishes all of it, so its logo goes with it.
+  const logoOfPublished = (mediaIdColumn: SQL) => sql`exists (
+    select 1
+    from ${sources} s
+    join ${contentItems} ci on ci.source_id = s.id
+    where s.logo_media_id = ${mediaIdColumn}
+      and s.deleted_at is null
+      and ci.status = 'published'
+      and ci.deleted_at is null
+      and ci.rights_status not in ('pending_review','restricted','removed','do_not_republish')
+  )`;
+  const [logo] = await db
+    .select({ mimeType: mediaAssets.mimeType, byteSize: mediaAssets.byteSize })
+    .from(mediaAssets)
+    .where(
+      and(
+        eq(mediaAssets.storageKey, key),
+        publicMediaCondition(),
+        sql`${mediaAssets.mimeType} <> 'image/svg+xml'`,
+        logoOfPublished(sql`${mediaAssets}.id`),
+      ),
+    )
+    .limit(1);
+  if (logo) {
+    return { mimeType: logo.mimeType, byteSize: logo.byteSize, isDerivative: false };
+  }
+
   // Derivatives live under their own keys. They are always raster images that
   // sharp produced from the original, so they carry no script whatever the
   // original was — which is what makes them safe to render inline.
@@ -956,6 +1004,22 @@ export async function findPublicMediaByKey(
       byteSize: derivative.byteSize,
       isDerivative: true,
     };
+  }
+
+  const [logoDerivative] = await db
+    .select({ mimeType: mediaDerivatives.mimeType, byteSize: mediaDerivatives.byteSize })
+    .from(mediaDerivatives)
+    .innerJoin(mediaAssets, eq(mediaAssets.id, mediaDerivatives.mediaId))
+    .where(
+      and(
+        eq(mediaDerivatives.storageKey, key),
+        publicMediaCondition(),
+        logoOfPublished(sql`${mediaDerivatives}.media_id`),
+      ),
+    )
+    .limit(1);
+  if (logoDerivative) {
+    return { mimeType: logoDerivative.mimeType, byteSize: logoDerivative.byteSize, isDerivative: true };
   }
 
   return null;

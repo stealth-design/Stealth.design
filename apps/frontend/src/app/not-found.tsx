@@ -1,9 +1,15 @@
-import { EmptyState, LightLink } from "@/components/gallery";
+import { BlockLink, EmptyState } from "@/components/gallery";
 
 export default function NotFound() {
   return (
-    <EmptyState title="Not found" action={<LightLink href="/screens">Browse screens</LightLink>}>
-      There is nothing published at this address. It may never have existed, or it may have been withdrawn.
-    </EmptyState>
+    <div className="pt-24">
+      <EmptyState
+        title="Page not found"
+        action={<BlockLink href="/screens">See all websites</BlockLink>}
+      >
+        There&apos;s nothing here. The link may be wrong, or the page may have
+        moved.
+      </EmptyState>
+    </div>
   );
 }

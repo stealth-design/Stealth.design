@@ -71,6 +71,10 @@ export interface PublicSourceSummary {
   readonly productName: string | null;
   readonly type: string;
   readonly module: string;
+  /** The website's logo, a raster image; null when it has none. */
+  readonly logoUrl: string | null;
+  /** The website itself — where "View website" goes. Always http(s). */
+  readonly websiteUrl: string | null;
 }
 
 export interface PublicContentSummary {
@@ -235,9 +239,18 @@ export interface SourceRowForPublic {
   readonly productName: string | null;
   readonly type: string;
   readonly module: string;
+  readonly canonicalUrl?: string | null;
+  readonly logoMediaId?: string | null;
 }
 
-export function serialiseSource(row: SourceRowForPublic): PublicSourceSummary {
+/**
+ * A website, as the public sees it. `resolveLogo` turns the logo's media id
+ * into a servable URL; without one, no logo is shown.
+ */
+export function serialiseSource(
+  row: SourceRowForPublic,
+  resolveLogo: (mediaId: string | null | undefined) => string | null = () => null,
+): PublicSourceSummary {
   return {
     id: row.id,
     name: row.name,
@@ -247,7 +260,23 @@ export function serialiseSource(row: SourceRowForPublic): PublicSourceSummary {
     productName: row.productName,
     type: row.type,
     module: row.module,
+    logoUrl: resolveLogo(row.logoMediaId),
+    websiteUrl: websiteUrl(row.canonicalUrl ?? null, row.domain),
   };
+}
+
+/** The website's home address — only ever http(s), never anything a link could run. */
+function websiteUrl(canonicalUrl: string | null, domain: string | null): string | null {
+  for (const candidate of [canonicalUrl, domain ? `https://${domain}/` : null]) {
+    if (!candidate) continue;
+    try {
+      const url = new URL(candidate);
+      if (url.protocol === "https:" || url.protocol === "http:") return url.toString();
+    } catch {
+      // Not a URL; try the next.
+    }
+  }
+  return null;
 }
 
 export interface TermRowForPublic {

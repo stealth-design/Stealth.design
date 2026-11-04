@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowRight, Boxes, Layers, LayoutGrid, Search, Shapes, Workflow } from "lucide-react";
+import {
+  ArrowRight,
+  Boxes,
+  Layers,
+  LayoutGrid,
+  Search,
+  Shapes,
+  Workflow,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -64,14 +72,16 @@ export function SearchCommand({ className }: { className?: string }) {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "flex h-8 items-center gap-2 rounded-md px-2 text-[13px] text-dim transition-colors hover:text-lit",
+          "flex h-8 items-center gap-2 rounded-[4px] bg-ink px-2.5 text-ink-foreground transition-opacity hover:opacity-80",
           className,
         )}
       >
-        <Search className="size-4" />
-        <span className="hidden md:inline">Search</span>
+        <Search className="size-4 md:hidden" />
+        <span className="t-nav hidden md:inline">Search</span>
         <span className="sr-only md:hidden">Search</span>
-        <Kbd className="num hidden bg-transparent text-faint lg:inline-flex">⌘K</Kbd>
+        <Kbd className="hidden bg-ink-foreground/15 text-ink-foreground lg:inline-flex">
+          ⌘K
+        </Kbd>
       </button>
 
       <CommandDialog
@@ -83,34 +93,54 @@ export function SearchCommand({ className }: { className?: string }) {
         {/* This version of `CommandDialog` does not create the cmdk root
             itself, so the palette brings its own. */}
         <Command>
-        <CommandInput placeholder="Search screens, products, patterns…" value={query} onValueChange={setQuery} />
-        <CommandList>
-          <CommandEmpty>Nothing to jump to.</CommandEmpty>
-          {trimmed ? (
-            <CommandGroup heading="Search">
-              <CommandItem value={`search-screens ${trimmed}`} onSelect={() => go(`/screens?q=${encodeURIComponent(trimmed)}`)}>
-                <Search />
-                <span className="flex-1 truncate">Screens matching “{trimmed}”</span>
-                <ArrowRight />
-              </CommandItem>
-              <CommandItem value={`search-flows ${trimmed}`} onSelect={() => go(`/flows?q=${encodeURIComponent(trimmed)}`)}>
-                <Workflow />
-                <span className="flex-1 truncate">Flows matching “{trimmed}”</span>
-                <ArrowRight />
-              </CommandItem>
-            </CommandGroup>
-          ) : null}
-          {places.length > 0 ? (
-            <CommandGroup heading="Go to">
-              {places.map((place) => (
-                <CommandItem key={place.href} value={`go ${place.label}`} onSelect={() => go(place.href)}>
-                  <place.icon />
-                  {place.label}
+          <CommandInput
+            placeholder="Search screens, products, patterns…"
+            value={query}
+            onValueChange={setQuery}
+          />
+          <CommandList>
+            <CommandEmpty>Nothing to jump to.</CommandEmpty>
+            {trimmed ? (
+              <CommandGroup heading="Search">
+                <CommandItem
+                  value={`search-screens ${trimmed}`}
+                  onSelect={() =>
+                    go(`/screens?q=${encodeURIComponent(trimmed)}`)
+                  }
+                >
+                  <Search />
+                  <span className="flex-1 truncate">
+                    Screens matching “{trimmed}”
+                  </span>
+                  <ArrowRight />
                 </CommandItem>
-              ))}
-            </CommandGroup>
-          ) : null}
-        </CommandList>
+                <CommandItem
+                  value={`search-flows ${trimmed}`}
+                  onSelect={() => go(`/flows?q=${encodeURIComponent(trimmed)}`)}
+                >
+                  <Workflow />
+                  <span className="flex-1 truncate">
+                    Flows matching “{trimmed}”
+                  </span>
+                  <ArrowRight />
+                </CommandItem>
+              </CommandGroup>
+            ) : null}
+            {places.length > 0 ? (
+              <CommandGroup heading="Go to">
+                {places.map((place) => (
+                  <CommandItem
+                    key={place.href}
+                    value={`go ${place.label}`}
+                    onSelect={() => go(place.href)}
+                  >
+                    <place.icon />
+                    {place.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
+          </CommandList>
         </Command>
       </CommandDialog>
     </>

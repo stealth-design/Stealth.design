@@ -51,6 +51,25 @@ const ACRONYMS = new Map([
 ]);
 
 /** A vocabulary key like `ui_pattern` as a heading. */
+/**
+ * What a tag group is called on the site. Plain names for visitors, not the
+ * internal kinds the CMS files tags under.
+ */
+const KIND_LABELS: Record<string, string> = {
+  industry: "Industry",
+  ui_pattern: "Type",
+  ux_pattern: "Style",
+  component: "Elements",
+  page_type: "Page",
+  screen_type: "Page",
+  state: "State",
+  function: "Category",
+};
+
+export function kindLabel(kind: string): string {
+  return KIND_LABELS[kind] ?? humanise(kind);
+}
+
 export function humanise(value: string): string {
   const words = value.split(/[_\s]+/).filter(Boolean);
   if (words.length === 0) return value;

@@ -1,4 +1,10 @@
-import { ContactSheet, EmptyState, PageIntro, Pager, Room } from "@/components/gallery";
+import {
+  CardGrid,
+  EmptyState,
+  PageHeader,
+  Pager,
+  ScreenCard,
+} from "@/components/gallery";
 import { api } from "@/lib/api";
 import { plural } from "@/lib/format";
 
@@ -22,7 +28,12 @@ export default async function FlowsPage({
   const q = single("q");
   const sourceSlug = single("source");
 
-  const results = await api.listFlows({ q, source: sourceSlug, page, pageSize: PAGE_SIZE });
+  const results = await api.listFlows({
+    q,
+    source: sourceSlug,
+    page,
+    pageSize: PAGE_SIZE,
+  });
   const totalPages = Math.max(1, Math.ceil(results.total / PAGE_SIZE));
 
   const pageHref = (target: number) => {
@@ -36,21 +47,25 @@ export default async function FlowsPage({
 
   return (
     <>
-      <PageIntro
+      <PageHeader
+        label={q ? "Search" : plural(results.total, "flow")}
         title={q ? `“${q}”` : "Flows"}
-        count={plural(results.total, "flow")}
-        description="Journeys through a product — signing up, checking out, setting something up — one screen at a time."
+        note="Journeys through a product, one screen at a time: signing up, checking out, setting something up."
       />
+
       {results.items.length === 0 ? (
         <EmptyState title="No flows yet">
-          A flow is an ordered journey through screens, assembled by hand from screens that have already
-          been captured.
+          A flow walks you through a website one screen at a time. Check back
+          soon.
         </EmptyState>
       ) : (
-        <Room>
-          <ContactSheet items={results.items} numberFrom={(page - 1) * PAGE_SIZE + 1} size="lg" />
-        </Room>
+        <CardGrid columns={3}>
+          {results.items.map((flow, index) => (
+            <ScreenCard key={flow.id} item={flow} priority={index < 3} />
+          ))}
+        </CardGrid>
       )}
+
       <Pager page={page} totalPages={totalPages} href={pageHref} />
     </>
   );
