@@ -18,13 +18,7 @@ export function SiteFooter() {
     <footer className="mt-32 bg-ink text-ink-foreground md:mt-40">
       <div className="page-grid gap-y-12 pt-16 pb-10 md:pt-20">
         <div className="col-span-full md:col-span-4">
-          <Link
-            href="/"
-            aria-label="Stealth.design home"
-            className="inline-block hover:opacity-70"
-          >
-            <Wordmark height="clamp(3.5rem, 7vw, 6.5rem)" />
-          </Link>
+          <Wordmark height="clamp(3.5rem, 7vw, 6.5rem)" />
           <p className="t-lead mt-6 text-balance">
             The best first impressions on the web.
           </p>
