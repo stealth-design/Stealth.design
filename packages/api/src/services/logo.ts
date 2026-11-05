@@ -6,9 +6,8 @@
  *   icon    the moment a website is added, its home page is read (without
  *           running it) for the icons it publishes about itself; the largest
  *           raster one is stored
- *   header  the first time someone opens it in the studio, the capture
- *           browser photographs the logo in the page header — the real
- *           wordmark — and it replaces an icon
+ *   header  (off, see HEADER_LOGOS in the internal router) the capture
+ *           browser photographing the wordmark in the page header
  *   manual  a person uploads one; nothing automatic ever replaces it
  *
  * Every image goes through `ingestMedia`, so it is type-sniffed, size-capped
@@ -29,8 +28,14 @@ export type LogoOrigin = "icon" | "header" | "manual";
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 uxdisrupt-research/0.1";
 
-/** Smaller than this is a favicon, not a logo worth showing. */
+/** Smaller than this is too blurry to show. */
 const MIN_LOGO_PX = 48;
+
+/**
+ * Wider or taller than this is a wordmark or a banner, not an icon. Logos are
+ * shown as small squares, and a wordmark squeezed into one is unreadable.
+ */
+const MAX_ICON_RATIO = 1.25;
 
 export async function getWebsiteLogo(context: BaseContext, sourceId: string) {
   const [row] = await context.db
@@ -83,8 +88,16 @@ export async function findWebsiteIcon(
   // Big, then Apple's, then whatever is left — and try a few, because sites
   // often declare icons that no longer exist.
   candidates.sort((a, b) => (b.size ?? 0) - (a.size ?? 0));
+  // Many sites serve Apple's touch icon at its conventional address without
+  // declaring it. Last resort, after everything the page names.
+  for (const path of ["/apple-touch-icon.png", "/apple-touch-icon-precomposed.png"]) {
+    const url = new URL(path, page.value.finalUrl).toString();
+    if (!candidates.some((candidate) => candidate.url === url)) {
+      candidates.push({ url, kind: "apple-touch-icon", size: 180 });
+    }
+  }
 
-  for (const candidate of candidates.slice(0, 6)) {
+  for (const candidate of candidates.slice(0, 8)) {
     const image = await fetchGuarded(candidate.url, {
       userAgent: USER_AGENT,
       maxBytes: 2 * 1024 * 1024,
@@ -107,7 +120,10 @@ export async function findWebsiteIcon(
         },
       });
       if (stored.mimeType === "image/svg+xml") continue;
-      if ((stored.width ?? 0) < MIN_LOGO_PX && (stored.height ?? 0) < MIN_LOGO_PX) continue;
+      const width = stored.width ?? 0;
+      const height = stored.height ?? 0;
+      if (width < MIN_LOGO_PX && height < MIN_LOGO_PX) continue;
+      if (width && height && Math.max(width, height) / Math.min(width, height) > MAX_ICON_RATIO) continue;
       const [asset] = await context.db
         .select({ storageKey: mediaAssets.storageKey })
         .from(mediaAssets)

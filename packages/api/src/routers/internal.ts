@@ -72,7 +72,14 @@ import type { BaseContext, WorkerContext } from "../context.js";
 import { validate } from "../errors.js";
 import { recordDiscoveredPage } from "../services/discovery.js";
 import { createScreenFromCapture } from "../services/studio.js";
-import { useHeaderLogo } from "../services/logo.js";
+import { prefillWebsiteLogo, useHeaderLogo } from "../services/logo.js";
+
+/**
+ * Photograph the logo in a website's header during a capture. Off: header
+ * logos are wordmarks, and logos are shown as small square icons beside the
+ * name. Kept for if wordmarks are wanted again.
+ */
+const HEADER_LOGOS = false;
 import {
   endLiveSession,
   liveLeaseIsFresh,
@@ -704,15 +711,22 @@ export function createInternalApi(deps: InternalApiDeps): Hono<Env> {
     });
     if (!session) return c.json({ session: null });
 
-    // Ask the browser to photograph the header logo while it is there, when
-    // the website has no logo yet or only its app icon.
+    // Logos are the website's own square icon, never its header wordmark
+    // (a logo with the name written in it repeats the name beside it). So
+    // the browser is not asked to photograph the header; a website with no
+    // logo yet gets another look for its icon instead, in the background.
     const [logo] = await context.db
-      .select({ mediaId: sources.logoMediaId, origin: sources.logoOrigin })
+      .select({ sourceId: sources.id, mediaId: sources.logoMediaId })
       .from(captureSessions)
       .innerJoin(sources, eq(sources.id, captureSessions.sourceId))
       .where(eq(captureSessions.id, session.id))
       .limit(1);
-    const wantsLogo = Boolean(logo) && (logo!.mediaId === null || logo!.origin === "icon");
+    if (logo && logo.mediaId === null) {
+      void prefillWebsiteLogo(context, logo.sourceId).catch((error: unknown) => {
+        context.logger.warn("Could not look for the website's icon", { error });
+      });
+    }
+    const wantsLogo = HEADER_LOGOS && Boolean(logo) && logo!.mediaId === null;
 
     return c.json({
       session: {

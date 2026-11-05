@@ -40,6 +40,7 @@ import {
   notFound,
   registrableDomain,
   shortId,
+  dedupeSlug,
   slugify,
   splitPastedUrls,
   URL_REFUSAL_BUCKET,
@@ -673,6 +674,15 @@ export async function resolveSourceForUrl(
   const sourceId = uuidv7();
   const name = site.replace(/\.[a-z.]+$/, "").replace(/^./, (c) => c.toUpperCase());
 
+  // The public address is the name: /websites/gladia. A clash takes the next
+  // number (gladia-2); `sources_slug_key` covers every row, deleted or not.
+  const slugBase = slugify(name) || slugify(site) || "website";
+  const takenSlugs = await db
+    .select({ slug: sources.slug })
+    .from(sources)
+    .where(or(eq(sources.slug, slugBase), sql`${sources.slug} like ${`${slugBase}-%`}`));
+  const slug = dedupeSlug(slugBase, new Set(takenSlugs.map((row) => row.slug)));
+
   await db
     .insert(sources)
     .values({
@@ -680,7 +690,7 @@ export async function resolveSourceForUrl(
       module: (options.module ?? "web") as "web",
       type: "website",
       name,
-      slug: `${slugify(site)}-${shortId(4).toLowerCase()}`,
+      slug,
       domain: parsed.host,
       site,
       canonicalUrl: `${parsed.protocol}//${parsed.host}`,
