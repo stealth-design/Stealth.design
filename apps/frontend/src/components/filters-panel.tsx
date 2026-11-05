@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import Link from "next/link";
 import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -14,23 +15,26 @@ import { cn } from "@/lib/utils";
  */
 export function FiltersPanel({
   activeCount,
+  clearHref,
   children,
 }: {
   activeCount: number;
+  /** Where "Clear filters" goes; shown beside the button when any is on. */
+  clearHref: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(activeCount > 0);
   const id = useId();
   return (
-    <div className="mb-10 md:mb-14">
-      <div className="page-grid">
+    <div className="mb-8 md:mb-10">
+      <div className="flex items-center gap-5 px-4 md:px-10">
         <button
           type="button"
           aria-expanded={open}
           aria-controls={id}
           onClick={() => setOpen((value) => !value)}
           className={cn(
-            "col-span-full inline-flex h-9 w-fit items-center gap-2 rounded-[6px] border px-3 text-[15px] tracking-[-0.01em] uppercase transition-colors",
+            "inline-flex h-9 w-fit items-center gap-2 rounded-[6px] border px-3 text-[15px] tracking-[-0.01em] uppercase transition-colors",
             open
               ? "border-foreground bg-foreground text-background"
               : "border-foreground/80 hover:bg-foreground hover:text-background",
@@ -47,6 +51,14 @@ export function FiltersPanel({
             className={cn("size-4 transition-transform", open && "rotate-180")}
           />
         </button>
+        {activeCount > 0 ? (
+          <Link
+            href={clearHref}
+            className="t-label underline underline-offset-4 hover:opacity-60"
+          >
+            Clear {activeCount === 1 ? "1 filter" : `${activeCount} filters`}
+          </Link>
+        ) : null}
       </div>
       {/*
         Slides open and shut: the row's height animates between 0fr and 1fr

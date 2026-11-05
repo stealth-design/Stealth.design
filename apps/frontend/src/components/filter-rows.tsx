@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Filters, type FilterOption } from "@/components/gallery";
+import { cn } from "@/lib/utils";
 
 export interface FilterRow {
   readonly label: string;
@@ -15,10 +16,13 @@ export function FilterRows({
   rows,
   clearHref,
   activeCount,
+  showClear = true,
 }: {
   rows: readonly FilterRow[];
   clearHref: string;
   activeCount: number;
+  /** Off where the clear link is shown elsewhere (beside a Filters button). */
+  showClear?: boolean;
 }) {
   const shown = rows.filter((row) => row.options.length > 0);
   if (shown.length === 0) return null;
@@ -34,8 +38,8 @@ export function FilterRows({
           </div>
         </div>
       ))}
-      <div className="page-grid border-t pt-5">
-        {activeCount > 0 ? (
+      <div className={cn("page-grid border-t", showClear && "pt-5")}>
+        {showClear && activeCount > 0 ? (
           <p className="t-label col-span-full md:col-span-10 md:col-start-3">
             <Link
               href={clearHref}

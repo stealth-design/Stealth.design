@@ -1,16 +1,10 @@
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  EmptyState,
-  Facts,
-  Filters,
-  Provenance,
-  Shot,
-} from "@/components/gallery";
+import { EmptyState, Filters, Shot } from "@/components/gallery";
 import { Reveal } from "@/components/reveal";
 import { api } from "@/lib/api";
-import { displayUrl, formatDate, humanise, kindLabel } from "@/lib/format";
+import { formatDate, humanise, kindLabel } from "@/lib/format";
 import { websitesPath } from "@/lib/paths";
 
 /** More than any website has for launch; the page is one long scroll. */
@@ -31,8 +25,9 @@ export async function generateMetadata({
 }
 
 /**
- * One website: what is known about it on the column lines, then every fold
- * captured from it, full width, one after another.
+ * One website: its name, a button to the real site and what it is, centred
+ * at the top; then every fold captured from it, full width, one after
+ * another.
  *
  * This is the only page for a website. Its address is /websites/<name>; the
  * screens have no address of their own, because they are parts of this page
@@ -81,13 +76,9 @@ export default async function WebsitePage({
 
   return (
     <>
-      {/*
-        No big title: the website's name, in the details below, is the
-        heading.
-      */}
       <nav
         aria-label="Breadcrumb"
-        className="t-label flex flex-wrap gap-x-2 px-4 pt-6 pb-8 text-muted-foreground md:px-10 md:pt-10 md:pb-10"
+        className="t-label flex flex-wrap gap-x-2 px-4 pt-6 text-muted-foreground md:px-10 md:pt-8"
       >
         <Link
           href={websitesPath()}
@@ -99,81 +90,75 @@ export default async function WebsitePage({
         <span className="text-foreground">{source.name}</span>
       </nav>
 
-      {/* --- What is known about it ----------------------------------------- */}
-      <section className="page-grid gap-y-14 border-t pt-10">
-        <div className="col-span-full md:col-span-4">
+      {/* --- The name, the way in, then what it is --------------------------- */}
+      {/*
+        Centred, the name first and large but not shouting, then one button
+        to the real site (the name itself is not a link: the button is the
+        way out). The facts sit in a row beneath. Short enough that the first
+        fold reaches the top of the screenshots.
+      */}
+      <section className="px-4 pt-10 pb-12 text-center md:px-10 md:pt-10 md:pb-14">
+        <Reveal>
+          <h1 className="mx-auto max-w-[16ch] text-[clamp(2.25rem,4.6vw,4.75rem)] leading-[0.95] font-semibold tracking-[-0.045em] break-words uppercase text-balance">
+            {source.name}
+          </h1>
+          {source.description ? (
+            <p className="t-note mx-auto mt-5 max-w-xl text-muted-foreground">
+              {source.description}
+            </p>
+          ) : null}
           {website ? (
             <a
               href={website}
               target="_blank"
               rel="nofollow noopener noreferrer"
-              className="group inline-block"
+              className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-5 text-[15px] font-medium tracking-[-0.01em] text-background transition-opacity hover:opacity-80 md:mt-8"
             >
-              <h1 className="flex items-start gap-2 text-[clamp(1.75rem,2.8vw,3rem)] leading-[0.9] font-semibold tracking-[-0.04em] break-words uppercase group-hover:opacity-60">
-                <span className="min-w-0">{source.name}</span>
-                <ArrowUpRight className="mt-0.5 size-5 shrink-0" />
-              </h1>
+              View website
+              <ArrowUpRight aria-hidden className="size-4" />
             </a>
-          ) : (
-            <h1 className="text-[clamp(1.75rem,2.8vw,3rem)] leading-[0.9] font-semibold tracking-[-0.04em] break-words uppercase">
-              {source.name}
-            </h1>
-          )}
-          {source.description ? (
-            <p className="t-note mt-6 max-w-md text-muted-foreground">
-              {source.description}
-            </p>
           ) : null}
-        </div>
+        </Reveal>
 
-        <div className="col-span-full md:col-span-4 md:col-start-5">
-          <Facts
-            items={[
-              {
-                label: "Device",
-                value: devices.length
-                  ? devices.map((device) => humanise(device)).join(", ")
-                  : null,
-              },
-              { label: "Added", value: added ? formatDate(added) : null },
-              {
-                label: "Website",
-                value: website ? (
-                  <a
-                    href={website}
-                    target="_blank"
-                    rel="nofollow noopener noreferrer"
-                    className="underline underline-offset-4 hover:opacity-60"
-                  >
-                    {displayUrl(website)}
-                  </a>
-                ) : null,
-              },
-            ]}
-          />
-        </div>
-
-        <div className="col-span-full space-y-8 md:col-span-4 md:col-start-9">
+        <dl className="mx-auto mt-10 flex max-w-4xl flex-wrap items-start justify-center gap-x-14 gap-y-6 md:mt-12">
           {[...byKind.entries()].map(([kind, group]) => (
-            <div key={kind}>
-              <p className="t-label mb-3 text-muted-foreground">
+            <div key={kind} className="flex flex-col items-center">
+              <dt className="t-label mb-3 text-muted-foreground">
                 {kindLabel(kind)}
-              </p>
-              <Filters
-                options={group.map((term) => ({
-                  label: term.name,
-                  href: `/screens?term=${encodeURIComponent(term.slug)}`,
-                  title: term.description ?? undefined,
-                }))}
-              />
+              </dt>
+              <dd>
+                <Filters
+                  options={group.map((term) => ({
+                    label: term.name,
+                    href: `/?term=${encodeURIComponent(term.slug)}#websites`,
+                    title: term.description ?? undefined,
+                  }))}
+                />
+              </dd>
             </div>
           ))}
-
-          <Provenance
-            sourceUrl={screens[0]?.sourceUrl ?? website}
-            attribution={screens[0]?.attribution ?? source.attribution}
-          />
-        </div>
+          {added ? (
+            <div className="flex flex-col items-center">
+              <dt className="t-label mb-3 text-muted-foreground">Added</dt>
+              <dd className="flex h-9 items-center text-[17px]">
+                {formatDate(added)}
+              </dd>
+            </div>
+          ) : null}
+          {devices.length ? (
+            <div className="flex flex-col items-center">
+              <dt className="t-label mb-3 text-muted-foreground">Device</dt>
+              <dd className="flex h-9 items-center text-[17px]">
+                {devices.map((device) => humanise(device)).join(", ")}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+        {source.attribution ? (
+          <p className="t-label mx-auto mt-8 max-w-xl text-muted-foreground">
+            {source.attribution}
+          </p>
+        ) : null}
       </section>
 
       {/* --- The folds ------------------------------------------------------ */}
@@ -182,7 +167,7 @@ export default async function WebsitePage({
           <EmptyState title="Coming soon" />
         </div>
       ) : (
-        <div className="mt-14 space-y-6 px-4 md:mt-20 md:px-10">
+        <div className="space-y-6 px-4 md:px-10">
           {screens.flatMap((screen, screenIndex) =>
             (screen.media.length ? screen.media : [null]).map(
               (media, index) => (

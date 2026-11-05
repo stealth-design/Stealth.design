@@ -144,31 +144,19 @@ export default async function HomePage({
     <>
       {/* --- The first fold --------------------------------------------- */}
       {/*
-        Exactly one screen tall, less the header, so the screenshots only
-        appear on the first scroll. The sentence sits in the middle of the
-        space; the count closes the fold at the bottom.
+        Short on purpose: the wordmark and one line, then straight into the
+        filters and the first row of websites, all on the first screen.
       */}
-      <section className="flex min-h-[calc(100svh-4rem)] flex-col px-4 pb-8 md:min-h-[calc(100svh-5rem)] md:px-10 md:pb-10">
-        <div className="flex flex-1 items-center justify-center py-16">
-          <Reveal>
-            <Wordmark
-              height="clamp(2.75rem, 6vw, 5.5rem)"
-              className="mx-auto mb-8 md:mb-12"
-            />
-            <h1 className="mx-auto max-w-[19em] text-center text-[clamp(2rem,4.2vw,4.5rem)] leading-[1.08] font-normal tracking-[-0.04em] text-balance">
-              See how the best websites make a first impression, and find ideas
-              for your own.
-            </h1>
-          </Reveal>
-        </div>
-        <div className="t-label flex justify-center gap-4 text-muted-foreground md:justify-between">
-          <span>
-            {total === 1
-              ? "1 website to explore"
-              : `${total.toLocaleString("en-US")} websites to explore`}
-          </span>
-          <span className="hidden md:inline">Website inspiration</span>
-        </div>
+      <section className="px-4 pt-12 pb-10 md:px-10 md:pt-14 md:pb-12">
+        <Reveal>
+          <Wordmark
+            height="clamp(2.5rem, 5vw, 4.5rem)"
+            className="mx-auto mb-5 md:mb-7"
+          />
+          <h1 className="mx-auto max-w-[26em] text-center text-[clamp(1.375rem,2.6vw,2.75rem)] leading-[1.15] font-normal tracking-[-0.03em] text-balance">
+            A library of ideas for better digital experiences.
+          </h1>
+        </Reveal>
       </section>
 
       {total === 0 ? (
@@ -250,13 +238,14 @@ export default async function HomePage({
           {/* --- The screens --------------------------------------------- */}
           <section
             id="websites"
-            className="mt-6 scroll-mt-6 md:mt-10"
+            className="scroll-mt-6"
             aria-label="Websites"
           >
-            <FiltersPanel activeCount={activeCount}>
+            <FiltersPanel activeCount={activeCount} clearHref="/#websites">
               <FilterRows
                 activeCount={activeCount}
                 clearHref="/#websites"
+                showClear={false}
                 rows={[
                   {
                     label: "Device",
