@@ -632,16 +632,35 @@ export async function startJob(context: AdminContext, jobId: string): Promise<vo
 export async function resolveSourceForUrl(
   db: Db,
   parsed: ParsedUrl,
-  options: { readonly createdBy?: string | null; readonly module?: string } = {},
+  options: {
+    readonly createdBy?: string | null;
+    readonly module?: string;
+    /**
+     * A subdomain is its own website, not part of its parent's: someone
+     * added weave.figma.com on purpose, so it becomes "Figma Weave" rather
+     * than another page of Figma. Only for a deliberate add; a capture never
+     * splits a website on its own.
+     */
+    readonly ownSubdomain?: boolean;
+  } = {},
 ): Promise<{ sourceId: string; created: boolean; blocked: boolean; blockedReason: string | null }> {
   // One website, one product. The site is the registrable domain, so a page
   // on app.notion.com finds the product added as www.notion.com instead of
   // quietly starting a second Notion. Rows from before `site` existed are
   // matched on their domain until the backfill reaches them.
-  const site = registrableDomain(parsed.host);
+  //
+  // The exception is a subdomain kept as its own website: its site is the
+  // subdomain itself (weave.figma.com), so pages there find it first, and
+  // merging duplicates leaves it alone.
+  const registrable = registrableDomain(parsed.host);
+  const bareHost = parsed.host.replace(/^www\./, "");
+  const isSubdomain = bareHost !== registrable;
+  const site = options.ownSubdomain && isSubdomain ? bareHost : registrable;
   const [existing] = await db
     .select({
       id: sources.id,
+      site: sources.site,
+      domain: sources.domain,
       crawlBlockedAt: sources.crawlBlockedAt,
       crawlBlockedReason: sources.crawlBlockedReason,
     })
@@ -650,19 +669,30 @@ export async function resolveSourceForUrl(
       and(
         sql`${sources.deletedAt} is null`,
         or(
-          eq(sources.site, site),
+          eq(sources.site, bareHost),
+          eq(sources.site, registrable),
           and(
             isNull(sources.site),
-            or(eq(sources.domain, site), sql`${sources.domain} like ${`%.${site}`}`),
+            or(eq(sources.domain, registrable), sql`${sources.domain} like ${`%.${registrable}`}`),
           ),
         ),
       ),
     )
-    // The product added for exactly this host wins over a sibling subdomain.
-    .orderBy(sql`(${sources.domain} = ${parsed.host}) desc`, asc(sources.createdAt))
+    // A subdomain's own website first, then the product added for exactly
+    // this host, then a sibling.
+    .orderBy(
+      sql`(${sources.site} = ${bareHost}) desc`,
+      sql`(${sources.domain} = ${parsed.host}) desc`,
+      asc(sources.createdAt),
+    )
     .limit(1);
 
-  if (existing) {
+  // Adding a subdomain on purpose, and all we have is its parent: make it
+  // its own website instead of handing back the parent.
+  const splitFromParent =
+    site !== registrable && existing !== undefined && existing.site !== site && existing.domain !== parsed.host;
+
+  if (existing && !splitFromParent) {
     return {
       sourceId: existing.id,
       created: false,
@@ -672,7 +702,13 @@ export async function resolveSourceForUrl(
   }
 
   const sourceId = uuidv7();
-  const name = site.replace(/\.[a-z.]+$/, "").replace(/^./, (c) => c.toUpperCase());
+  const title = (word: string) => word.replace(/^./, (c) => c.toUpperCase());
+  const parentName = title(registrable.replace(/\.[a-z.]+$/, ""));
+  // weave.figma.com is "Figma Weave"; figma.com is "Figma".
+  const name =
+    site === registrable
+      ? parentName
+      : `${parentName} ${title(site.slice(0, -registrable.length - 1).split(".")[0] ?? "")}`.trim();
 
   // The public address is the name: /websites/gladia. A clash takes the next
   // number (gladia-2); `sources_slug_key` covers every row, deleted or not.

@@ -51,7 +51,12 @@ export async function addProduct(context: AdminContext, url: string): Promise<Ad
   if (!parsed.ok) throw new AppError(ErrorCode.VALIDATION_FAILED, parsed.error.message);
 
   return inTransaction(context, async (tx) => {
-    const resolved = await resolveSourceForUrl(tx.db, parsed.value, { createdBy: context.actor.id });
+    // Added on purpose by its address, so a subdomain (weave.figma.com) is a
+    // website of its own rather than part of its parent.
+    const resolved = await resolveSourceForUrl(tx.db, parsed.value, {
+      createdBy: context.actor.id,
+      ownSubdomain: true,
+    });
     const [row] = await tx.db
       .select({ name: sources.name, status: sources.status })
       .from(sources)
