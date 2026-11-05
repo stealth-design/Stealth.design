@@ -14,7 +14,8 @@
     "build": "tsc -b",
     "clean": "rm -rf dist *.tsbuildinfo",
     "seed": "node --enable-source-maps dist/seed.js",
-    "seed:demo": "node --enable-source-maps dist/demo.js"
+    "seed:demo": "node --enable-source-maps dist/demo.js",
+    "reset-admin": "node --enable-source-maps dist/reset-admin.js"
   },
   "dependencies": {
     "@uxd/api": "0.1.0",

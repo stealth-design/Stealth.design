@@ -33,3 +33,5 @@ npm-debug.log*
 .idea/
 .vscode/*
 !.vscode/extensions.json
+.vercel
+.env*.local

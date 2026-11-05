@@ -17,6 +17,7 @@
     "db:reset": "npm run -w @uxd/database reset",
     "db:seed": "npm run -w @uxd/seed seed",
     "db:seed:demo": "npm run -w @uxd/seed seed:demo",
+    "db:reset-admin": "npm run -w @uxd/seed reset-admin",
     "dev": "node scripts/dev.mjs",
     "dev:cms": "npm run -w @uxd/cms dev",
     "dev:frontend": "npm run -w @uxd/frontend dev",
