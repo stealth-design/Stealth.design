@@ -4,7 +4,7 @@
  * Tag actions. The rules — who may, no duplicate names in a group, what a
  * merge or a delete moves — live in the tags service.
  */
-import { refreshAll as refresh } from "@/lib/public-site";
+import { refresh } from "next/cache";
 import { createTag, deleteTag, mergeTags, renameTag } from "@uxd/api";
 import { AppError } from "@uxd/shared";
 import { getAdminContext } from "@/lib/server";

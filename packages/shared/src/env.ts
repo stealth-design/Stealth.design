@@ -77,8 +77,6 @@ export const cmsEnvSchema = baseEnvSchema.extend({
   CMS_BASE_URL: z.string().url().default("http://localhost:3000"),
   /** Origin allowed to call the public API cross-origin (the frontend). */
   PUBLIC_FRONTEND_ORIGIN: z.string().url().default("http://localhost:3001"),
-  /** Shared with the public site so the CMS can tell it to refresh after a change. */
-  PUBLIC_SITE_REVALIDATE_SECRET: z.string().min(32, "PUBLIC_SITE_REVALIDATE_SECRET must be at least 32 characters").optional(),
 
   /** AI classification. Absent means classification runs in heuristic-only
    * mode; it is never required for the pipeline to work. */
@@ -160,7 +158,6 @@ export const WORKER_FORBIDDEN_ENV_KEYS: readonly string[] = [
   "STORAGE_S3_ACCESS_KEY_ID",
   "STORAGE_S3_SECRET_ACCESS_KEY",
   "BLOB_READ_WRITE_TOKEN",
-  "PUBLIC_SITE_REVALIDATE_SECRET",
   "ANTHROPIC_API_KEY",
   "AWS_ACCESS_KEY_ID",
   "AWS_SECRET_ACCESS_KEY",

@@ -9,7 +9,7 @@
  * thumbnailed, and recorded with provenance. There is no second, more
  * permissive upload path.
  */
-import { refreshAll as refresh } from "@/lib/public-site";
+import { refresh } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { mediaAssets } from "@uxd/database";
 import {
