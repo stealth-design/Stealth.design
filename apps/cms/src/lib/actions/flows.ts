@@ -6,7 +6,7 @@
  * Every one of these delegates to `@uxd/api`'s flow service, which owns the
  * position renumbering and the derived shape. Nothing here computes an order.
  */
-import { refresh } from "next/cache";
+import { refreshAll as refresh } from "@/lib/public-site";
 import { redirect } from "next/navigation";
 import {
   addScreensToFlow,

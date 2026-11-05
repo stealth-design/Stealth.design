@@ -7,7 +7,7 @@
  * a single-value vocabulary behaves. These translate its errors into something
  * the suggestions queue can show without losing the reviewer's place.
  */
-import { refresh } from "next/cache";
+import { refreshAll as refresh } from "@/lib/public-site";
 import {
   addAssignment,
   bulkAcceptSuggestions,

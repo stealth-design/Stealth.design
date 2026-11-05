@@ -62,14 +62,16 @@ const listQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(24),
 });
 
-/** Cache headings, chosen per route by how quickly staleness matters. */
+/**
+ * Cache headers. Not cached by the CDN in front of the CMS: the public site
+ * keeps its own copy and is told to refresh the moment something is
+ * published, and a CDN copy here would hand it the old answer back for
+ * minutes afterwards. Browsers may keep a list for a few seconds.
+ */
 const CACHE = {
-  /** Lists change whenever anything is published. */
-  list: "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
-  /** A detail page changes only when that record is edited. */
-  detail: "public, max-age=300, s-maxage=900, stale-while-revalidate=3600",
-  /** Facets and taxonomy move rarely. */
-  reference: "public, max-age=600, s-maxage=3600, stale-while-revalidate=86400",
+  list: "public, max-age=5, s-maxage=0",
+  detail: "public, max-age=5, s-maxage=0",
+  reference: "public, max-age=5, s-maxage=0",
 } as const;
 
 export function createPublicApi(deps: PublicApiDeps): Hono<Env> {

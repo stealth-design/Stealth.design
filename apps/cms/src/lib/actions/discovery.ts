@@ -9,7 +9,7 @@
  * needs — an error an operator can read, and a cache refresh so the list
  * reflects what just happened.
  */
-import { refresh } from "next/cache";
+import { refreshAll as refresh } from "@/lib/public-site";
 import { redirect } from "next/navigation";
 import {
   addDiscoveredPageByHand,

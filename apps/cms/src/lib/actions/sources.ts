@@ -8,7 +8,7 @@
  * service. What is added here is the translation of an `AppError` into
  * something the source screen can show.
  */
-import { refresh } from "next/cache";
+import { refreshAll as refresh } from "@/lib/public-site";
 import { flagSource, recaptureSource, updateSourceRights } from "@uxd/api";
 import { AppError } from "@uxd/shared";
 import { getAdminContext } from "@/lib/server";

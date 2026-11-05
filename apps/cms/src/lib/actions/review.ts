@@ -8,7 +8,7 @@
  * live. The action's own job is to translate an `AppError` into something the
  * review interface can show without losing the operator's place in the queue.
  */
-import { refresh } from "next/cache";
+import { refreshAll as refresh } from "@/lib/public-site";
 import {
   bulkApprove,
   bulkArchive,

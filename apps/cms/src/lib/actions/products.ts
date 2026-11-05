@@ -5,7 +5,7 @@
  * the audit write live in the service; this translates an `AppError` into a
  * line the form can show.
  */
-import { refresh } from "next/cache";
+import { refreshAll as refresh } from "@/lib/public-site";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import {
