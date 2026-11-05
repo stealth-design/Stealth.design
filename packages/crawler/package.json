@@ -14,7 +14,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@duckduckgo/autoconsent": "16.43.2",
+    "@duckduckgo/autoconsent": "17.2.0",
     "@uxd/shared": "0.1.0",
     "@uxd/types": "0.1.0",
     "cheerio": "1.0.0-rc.12",
