@@ -7,7 +7,7 @@ import {
 import { api } from "@/lib/api";
 import { plural } from "@/lib/format";
 
-export const metadata = { title: "Products" };
+export const metadata = { title: "Websites" };
 
 /**
  * Every product with published screens, two to a row.
@@ -30,9 +30,9 @@ export default async function SourcesPage() {
   return (
     <>
       <PageHeader
-        label={plural(sources.total, "company", "companies")}
-        title="Companies"
-        note="Every company with a website here. Names and logos belong to their owners."
+        label={plural(sources.total, "website")}
+        title="Websites"
+        note="Every website here. Names and logos belong to their owners."
       />
 
       {sources.items.length === 0 ? (

@@ -84,6 +84,10 @@ function imageOrigins(): string[] {
 
 const config: NextConfig = {
   reactStrictMode: true,
+  /** Outbound links the site's own copy points at, kept with the config. */
+  env: {
+    STUDIO_STEALTH_URL: "https://studiostealth.com/",
+  },
   poweredByHeader: false,
   typescript: { ignoreBuildErrors: false },
 
@@ -97,6 +101,18 @@ const config: NextConfig = {
    * here is designed to be embedded, and an embeddable page of other people's
    * screenshots is an invitation to present their work as your own.
    */
+  /**
+   * Old addresses. Websites lived at /sources/<slug>; they are /websites/<slug>
+   * now. (Old screen addresses, /entry/<slug>, need a lookup to find their
+   * website, so `app/entry/[slug]` redirects those.)
+   */
+  async redirects() {
+    return [
+      { source: "/sources", destination: "/websites", permanent: true },
+      { source: "/sources/:slug", destination: "/websites/:slug", permanent: true },
+    ];
+  },
+
   async headers() {
     return [
       {

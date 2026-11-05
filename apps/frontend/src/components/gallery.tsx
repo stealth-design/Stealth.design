@@ -8,6 +8,7 @@ import type {
 } from "@uxd/api/client";
 import { Reveal } from "@/components/reveal";
 import { displayUrl, humanise } from "@/lib/format";
+import { itemPath, websitePath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
 
 /**
@@ -272,7 +273,7 @@ function Tag({ children }: { children: React.ReactNode }) {
 // --- Cards ----------------------------------------------------------------
 
 function entryHref(item: PublicContentSummary): string {
-  return item.kind === "flow" ? `/flow/${item.slug}` : `/entry/${item.slug}`;
+  return itemPath(item);
 }
 
 /**
@@ -289,22 +290,27 @@ export function SiteLogo({
   className?: string;
 }) {
   const frame = cn(
-    "flex shrink-0 items-center justify-center overflow-hidden rounded-[6px] border bg-white",
+    // A faint inner edge, drawn over the image, so a dark icon still reads
+    // as a tile against the black page.
+    "relative flex shrink-0 items-center justify-center overflow-hidden",
+    "after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:ring-1 after:ring-white/15 after:ring-inset",
     className,
   );
+  const radius = Math.max(6, Math.round(size * 0.24));
   if (source.logoUrl) {
-    // Square for an app icon, wider for a wordmark: the height is fixed and
-    // the width follows the image, up to a limit.
+    // Always a square, like an app icon. The icon arrives as a solid tile
+    // with its own background, so it fills the square: no frame, padding or
+    // border around it.
     return (
       <span
-        className={cn(frame, "px-[3px]")}
-        style={{ height: size, minWidth: size, maxWidth: size * 4 }}
+        className={frame}
+        style={{ width: size, height: size, borderRadius: radius }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={source.logoUrl}
           alt=""
-          className="h-[calc(100%-6px)] w-auto max-w-full object-contain"
+          className="size-full object-cover"
           loading="lazy"
           decoding="async"
         />
@@ -318,7 +324,12 @@ export function SiteLogo({
         frame,
         "bg-muted font-medium text-muted-foreground uppercase",
       )}
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.5) }}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: radius,
+        fontSize: Math.round(size * 0.45),
+      }}
     >
       {source.name.trim().charAt(0) || "?"}
     </span>
@@ -378,8 +389,8 @@ export function ScreenCard({
   const aside = item.deviceClass === "mobile" ? "Mobile" : null;
 
   return (
-    <article className="group rounded-xl border bg-card p-1.5 transition-colors duration-300 hover:border-foreground/20">
-      <div className="relative overflow-hidden rounded-[9px] bg-shot">
+    <article className="group">
+      <div className="relative overflow-hidden rounded-xl bg-shot">
         <Link
           href={href}
           aria-label={`${name}, ${item.title}`}
@@ -392,7 +403,6 @@ export function ScreenCard({
             className="transition-transform duration-700 ease-out group-hover:scale-[1.03]"
           />
         </Link>
-        {item.kind === "flow" ? <Tag>Flow</Tag> : null}
         {website ? (
           <>
             <span
@@ -407,22 +417,24 @@ export function ScreenCard({
         ) : null}
       </div>
 
-      <div className="flex items-center gap-2.5 px-1.5 pt-3 pb-1.5">
-        {showSource && source ? <SiteLogo source={source} size={24} /> : null}
-        <h3 className="min-w-0 flex-1 truncate text-[15px] leading-tight font-medium tracking-[-0.015em]">
-          {showSource && source ? (
-            <Link
-              href={`/sources/${source.slug}`}
-              className="transition-opacity hover:opacity-60"
-            >
+      <div className="flex items-center gap-3 pt-3">
+        {showSource && source ? (
+          <Link
+            href={websitePath(source.slug)}
+            className="flex min-w-0 flex-1 items-center gap-3 transition-opacity hover:opacity-70"
+          >
+            <SiteLogo source={source} size={40} />
+            <h3 className="min-w-0 truncate text-[16px] leading-tight font-medium tracking-[-0.015em]">
               {name}
-            </Link>
-          ) : (
+            </h3>
+          </Link>
+        ) : (
+          <h3 className="min-w-0 flex-1 truncate text-[15px] leading-tight font-medium tracking-[-0.015em]">
             <Link href={href} className="transition-opacity hover:opacity-60">
               {name}
             </Link>
-          )}
-        </h3>
+          </h3>
+        )}
         {aside ? (
           <span className="t-label shrink-0 text-muted-foreground">
             {aside}
@@ -448,7 +460,7 @@ export function ProductCard({
   return (
     <article className="group">
       <Link
-        href={`/sources/${source.slug}`}
+        href={websitePath(source.slug)}
         className="relative block overflow-hidden rounded-lg"
       >
         <Shot
@@ -462,7 +474,7 @@ export function ProductCard({
       <div className="mt-4 flex items-baseline justify-between gap-4">
         <h3 className="t-card">
           <Link
-            href={`/sources/${source.slug}`}
+            href={websitePath(source.slug)}
             className="transition-opacity hover:opacity-60"
           >
             {source.name}
@@ -579,7 +591,7 @@ export function Facts({
 }
 
 /**
- * Where an image came from. On every entry and flow: these are
+ * Where an image came from. On every screen: these are
  * other people's interfaces, and provenance is part of the record.
  * `nofollow` because a library linking out at scale should not hand out
  * ranking it did not intend to.

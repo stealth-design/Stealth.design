@@ -7,7 +7,6 @@ import {
   LayoutGrid,
   Search,
   Shapes,
-  Workflow,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -25,8 +24,7 @@ import { cn } from "@/lib/utils";
 
 const PLACES = [
   { href: "/screens", label: "Screens", icon: LayoutGrid },
-  { href: "/flows", label: "Flows", icon: Workflow },
-  { href: "/sources", label: "Products", icon: Boxes },
+  { href: "/websites", label: "Websites", icon: Boxes },
   { href: "/patterns", label: "Patterns", icon: Shapes },
   { href: "/collections", label: "Collections", icon: Layers },
 ] as const;
@@ -111,16 +109,6 @@ export function SearchCommand({ className }: { className?: string }) {
                   <Search />
                   <span className="flex-1 truncate">
                     Screens matching “{trimmed}”
-                  </span>
-                  <ArrowRight />
-                </CommandItem>
-                <CommandItem
-                  value={`search-flows ${trimmed}`}
-                  onSelect={() => go(`/flows?q=${encodeURIComponent(trimmed)}`)}
-                >
-                  <Workflow />
-                  <span className="flex-1 truncate">
-                    Flows matching “{trimmed}”
                   </span>
                   <ArrowRight />
                 </CommandItem>

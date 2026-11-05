@@ -2,31 +2,20 @@ import Link from "next/link";
 import {
   CardGrid,
   EmptyState,
+  Pager,
   ProductCard,
   ScreenCard,
   SectionHeader,
   SeeAllBar,
   Shot,
 } from "@/components/gallery";
+import { Wordmark } from "@/components/logo";
+import { FilterRows } from "@/components/filter-rows";
+import { FiltersPanel } from "@/components/filters-panel";
 import { Reveal } from "@/components/reveal";
 import { api } from "@/lib/api";
+import { screenPath } from "@/lib/paths";
 import { kindLabel } from "@/lib/format";
-
-/** What the library is, in three lines, each on its own column. */
-const PRINCIPLES = [
-  {
-    title: "Real websites",
-    note: "Live sites from real companies, shown in full detail.",
-  },
-  {
-    title: "All in one place",
-    note: "Great websites side by side, without opening a hundred tabs.",
-  },
-  {
-    title: "Ideas you can use",
-    note: "Find something you love, then visit the site to see it live.",
-  },
-];
 
 /** Three blocks, each starting on a column line: 1, 5 and 9. */
 const COLUMN_STARTS = [
@@ -44,19 +33,93 @@ const SHOW_FOLDS = false;
 
 const NONE = { items: [], total: 0 } as const;
 
+const PAGE_SIZE = 30;
+
+/** The vocabularies worth filtering by, in the order they are shown. */
+const FACET_ORDER = [
+  "screen_type",
+  "page_type",
+  "ux_pattern",
+  "ui_pattern",
+  "component",
+  "state",
+  "function",
+  "industry",
+  "design_style",
+];
+
 /**
  * The front page.
  *
- * For launch: the name, then the screens. Black and white throughout — the
- * colour is the screenshots.
+ * For launch: one sentence, then the screens. Dark throughout; the colour
+ * is the screenshots.
  */
-export default async function HomePage() {
-  const [recent, facets, sources, flows] = await Promise.all([
-    api.listScreens({ sort: "recent", pageSize: 12 }),
-    SHOW_FOLDS ? api.listFacets() : Promise.resolve([]),
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // The filters live here for now, since there are no other pages: each one
+  // is a query parameter, so a filtered view is a URL that can be shared.
+  const params = await searchParams;
+  const single = (key: string): string | undefined => {
+    const value = params[key];
+    return Array.isArray(value) ? value[0] : value;
+  };
+  const many = (key: string): string[] => {
+    const value = params[key];
+    return Array.isArray(value) ? value : value ? [value] : [];
+  };
+  const page = Math.max(1, Number(single("page") ?? 1) || 1);
+  const terms = many("term");
+  const device = single("device");
+  const sort: "recent" | "title" =
+    single("sort") === "title" ? "title" : "recent";
+  const filtering = terms.length > 0 || device !== undefined;
+
+  const [recent, facets, sources, everything] = await Promise.all([
+    api.listScreens({ sort, device, term: terms, page, pageSize: PAGE_SIZE }),
+    api.listFacets(),
     SHOW_FOLDS ? api.listSources({ pageSize: 4 }) : Promise.resolve(NONE),
-    SHOW_FOLDS ? api.listFlows({ pageSize: 1 }) : Promise.resolve(NONE),
+    // The count in the first fold is of everything, filtered or not.
+    filtering ? api.listScreens({ pageSize: 1 }) : Promise.resolve(null),
   ]);
+  const total = everything?.total ?? recent.total;
+  const totalPages = Math.max(1, Math.ceil(recent.total / PAGE_SIZE));
+
+  const withParams = (
+    changes: Record<string, string | string[] | undefined>,
+  ): string => {
+    const next = new URLSearchParams();
+    const base: Record<string, string | string[] | undefined> = {
+      device,
+      sort: sort === "recent" ? undefined : sort,
+      term: terms,
+      ...changes,
+    };
+    for (const [key, value] of Object.entries(base)) {
+      if (value === undefined || value === "") continue;
+      if (Array.isArray(value))
+        for (const item of value) next.append(key, item);
+      else next.set(key, value);
+    }
+    const query = next.toString();
+    // Land on the cards, not back at the top of the first fold.
+    return `${query ? `/?${query}` : "/"}#websites`;
+  };
+  const toggleTerm = (slug: string): string =>
+    withParams({
+      term: terms.includes(slug)
+        ? terms.filter((t) => t !== slug)
+        : [...terms, slug],
+      page: undefined,
+    });
+  const activeCount = terms.length + (device ? 1 : 0);
+  const filterGroups = facets
+    .filter(
+      (group) => FACET_ORDER.includes(group.kind) && group.terms.length > 0,
+    )
+    .sort((a, b) => FACET_ORDER.indexOf(a.kind) - FACET_ORDER.indexOf(b.kind));
 
   const covers = await Promise.all(
     sources.items.map((source) =>
@@ -67,71 +130,48 @@ export default async function HomePage() {
     ),
   );
 
-  const patternGroups = facets
+  const patternGroups = (SHOW_FOLDS ? facets : [])
     .filter((group) => group.terms.length > 0)
     .sort((a, b) => b.terms.length - a.terms.length)
     .slice(0, 4);
 
   const stats = [
     { value: recent.total, label: "Screens", href: "/screens" },
-    { value: sources.total, label: "Products", href: "/sources" },
-    { value: flows.total, label: "Flows", href: "/flows" },
+    { value: sources.total, label: "Websites", href: "/websites" },
   ];
 
   return (
     <>
       {/* --- The first fold --------------------------------------------- */}
       {/*
-        One screen tall. The three lines sit on the column lines the header's
-        notches point at (1, 5, 9), each a short headline with its small print
-        set well below it; the name and the sentence close the fold at the
-        bottom.
+        Exactly one screen tall, less the header, so the screenshots only
+        appear on the first scroll. The sentence sits in the middle of the
+        space; the count closes the fold at the bottom.
       */}
-      <section className="flex min-h-[calc(100svh-3rem)] flex-col pb-12 md:pb-16">
-        <div className="page-grid gap-y-10 pt-8 md:pt-10">
-          {PRINCIPLES.map((principle, index) => (
-            <Reveal
-              key={principle.title}
-              delay={index * 0.05}
-              className={COLUMN_STARTS[index]}
-            >
-              <p className="text-[clamp(1.05rem,1.4vw,1.375rem)] leading-snug tracking-[-0.02em]">
-                {principle.title}
-              </p>
-              <p className="t-label mt-4 max-w-[17rem] leading-relaxed text-muted-foreground md:mt-[clamp(5rem,16vh,10rem)]">
-                {principle.note}
-              </p>
-            </Reveal>
-          ))}
-        </div>
-
-        <div className="mt-auto overflow-hidden px-4 pt-20 md:px-10">
+      <section className="flex min-h-[calc(100svh-4rem)] flex-col px-4 pb-8 md:min-h-[calc(100svh-5rem)] md:px-10 md:pb-10">
+        <div className="flex flex-1 items-center justify-center py-16">
           <Reveal>
-            <h1
-              className="pb-[0.06em] text-center leading-[0.9] font-semibold tracking-[-0.065em]"
-              style={{ fontSize: "var(--t-hero)" }}
-            >
-              Stealth.design
-            </h1>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <p className="mx-auto mt-5 max-w-6xl text-center text-[clamp(1.25rem,2.5vw,2.6rem)] leading-[1.15] tracking-[-0.03em] text-balance md:mt-6">
+            <Wordmark
+              height="clamp(2.75rem, 6vw, 5.5rem)"
+              className="mx-auto mb-8 md:mb-12"
+            />
+            <h1 className="mx-auto max-w-[19em] text-center text-[clamp(2rem,4.2vw,4.5rem)] leading-[1.08] font-normal tracking-[-0.04em] text-balance">
               See how the best websites make a first impression, and find ideas
               for your own.
-            </p>
+            </h1>
           </Reveal>
-          <div className="t-label mt-10 flex justify-center gap-4 text-muted-foreground md:mt-14 md:justify-between">
-            <span>
-              {recent.total === 1
-                ? "1 website to explore"
-                : `${recent.total.toLocaleString("en-US")} websites to explore`}
-            </span>
-            <span className="hidden md:inline">Website inspiration</span>
-          </div>
+        </div>
+        <div className="t-label flex justify-center gap-4 text-muted-foreground md:justify-between">
+          <span>
+            {total === 1
+              ? "1 website to explore"
+              : `${total.toLocaleString("en-US")} websites to explore`}
+          </span>
+          <span className="hidden md:inline">Website inspiration</span>
         </div>
       </section>
 
-      {recent.total === 0 ? (
+      {total === 0 ? (
         <div className="mt-24">
           <EmptyState title="Coming soon">
             New websites are on the way. Check back soon.
@@ -146,7 +186,7 @@ export default async function HomePage() {
                 {recent.items.map((item, index) => (
                   <Link
                     key={item.id}
-                    href={`/entry/${item.slug}`}
+                    href={screenPath(item.slug, item.source?.slug)}
                     className="group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-lg md:w-[38vw]"
                     aria-label={item.title}
                   >
@@ -190,7 +230,7 @@ export default async function HomePage() {
             <section className="mt-32 md:mt-48">
               <SectionHeader
                 title="Products"
-                note="Every company here, with all of its screens."
+                note="Every website here, with all of its screens."
               />
               <CardGrid columns={2}>
                 {sources.items.map((source, index) => (
@@ -203,20 +243,88 @@ export default async function HomePage() {
                   />
                 ))}
               </CardGrid>
-              <SeeAllBar href="/sources">See all products</SeeAllBar>
+              <SeeAllBar href="/websites">See all products</SeeAllBar>
             </section>
           ) : null}
 
           {/* --- The screens --------------------------------------------- */}
-          <section className="mt-4 md:mt-6" aria-label="Latest websites">
-            <CardGrid columns={3}>
-              {recent.items.map((item, index) => (
-                <ScreenCard key={item.id} item={item} priority={index < 3} />
-              ))}
-            </CardGrid>
-            {recent.total > recent.items.length ? (
-              <SeeAllBar href="/screens">See all screens</SeeAllBar>
-            ) : null}
+          <section
+            id="websites"
+            className="mt-6 scroll-mt-6 md:mt-10"
+            aria-label="Websites"
+          >
+            <FiltersPanel activeCount={activeCount}>
+              <FilterRows
+                activeCount={activeCount}
+                clearHref="/#websites"
+                rows={[
+                  {
+                    label: "Device",
+                    options: [
+                      {
+                        label: "All",
+                        href: withParams({ device: undefined, page: undefined }),
+                        active: !device,
+                      },
+                      {
+                        label: "Desktop",
+                        href: withParams({ device: "desktop", page: undefined }),
+                        active: device === "desktop",
+                      },
+                      {
+                        label: "Mobile",
+                        href: withParams({ device: "mobile", page: undefined }),
+                        active: device === "mobile",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Sort",
+                    options: [
+                      {
+                        label: "Recent",
+                        href: withParams({ sort: undefined, page: undefined }),
+                        active: sort === "recent",
+                      },
+                      {
+                        label: "A–Z",
+                        href: withParams({ sort: "title", page: undefined }),
+                        active: sort === "title",
+                      },
+                    ],
+                  },
+                  ...filterGroups.map((group) => ({
+                    label: kindLabel(group.kind),
+                    options: group.terms.map((entry) => ({
+                      label: entry.term.name,
+                      href: toggleTerm(entry.term.slug),
+                      count: entry.count,
+                      active: terms.includes(entry.term.slug),
+                      title: entry.term.description ?? undefined,
+                    })),
+                  })),
+                ]}
+              />
+            </FiltersPanel>
+
+            {recent.items.length === 0 ? (
+              <EmptyState title="Nothing matches">
+                Try removing a filter or two.
+              </EmptyState>
+            ) : (
+              <CardGrid columns={3}>
+                {recent.items.map((item, index) => (
+                  <ScreenCard key={item.id} item={item} priority={index < 3} />
+                ))}
+              </CardGrid>
+            )}
+            <Pager
+              page={page}
+              totalPages={totalPages}
+              href={(target) =>
+                withParams({ page: target === 1 ? undefined : String(target) })
+              }
+            />
           </section>
 
           {/* --- By pattern ---------------------------------------------- */}

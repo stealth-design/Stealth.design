@@ -46,7 +46,9 @@ export default async function BrowsePage({
   const page = Math.max(1, Number(single("page") ?? 1) || 1);
   const terms = many("term");
   const q = single("q");
-  const kind = single("kind");
+  // Screens only: flows are not shown on the public site.
+  const kindParam = single("kind");
+  const kind = kindParam && kindParam !== "flow" ? kindParam : undefined;
   const sourceSlug = single("source");
   const collectionSlug = single("collection");
   const sort: "recent" | "title" =
@@ -55,7 +57,7 @@ export default async function BrowsePage({
   const [results, facets, collections] = await Promise.all([
     api.listContent({
       q,
-      kind,
+      kind: kind ?? "screen",
       source: sourceSlug,
       collection: collectionSlug,
       term: terms,
@@ -123,7 +125,7 @@ export default async function BrowsePage({
         }
         note={
           activeCollection?.description ??
-          "Every website and flow, in one place."
+          "Every website, in one place."
         }
       />
 

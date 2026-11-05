@@ -4,7 +4,6 @@ import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Wordmark } from "@/components/logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Sheet,
   SheetContent,
@@ -16,27 +15,13 @@ import { NAV } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 /**
- * The full set of section links, desktop and phone. Off for launch; only
- * Screens is shown. Search is off too — `SearchCommand` is kept, and goes
- * back next to `ThemeToggle` to bring it back.
+ * The section links, desktop and phone. Off for launch: the header is the
+ * wordmark alone. Search is off too: `SearchCommand` is kept and goes back
+ * at the far end to bring it back.
  */
 const SHOW_NAV = false;
 
-/**
- * Where the bar points: the three column lines the first fold is set on
- * (1, 5 and 9). Each gets a small notch under the bar, so the header and the
- * page below it read as one grid. On phones there is one column, so one notch.
- */
-const NOTCHES = [
-  "col-start-1",
-  "hidden md:block md:col-start-5",
-  "hidden md:block md:col-start-9",
-];
-
-/**
- * The header: a solid brand-red bar on the page grid. The wordmark sits on
- * column 1, Screens on column 5, the theme switch at the far end.
- */
+/** The header: no bar, just the page, and the wordmark top-left. */
 export function SiteHeader() {
   const pathname = usePathname();
   const isActive = (href: string) =>
@@ -44,14 +29,14 @@ export function SiteHeader() {
   const anyActive = NAV.some((item) => isActive(item.href));
 
   return (
-    <header className="sticky top-0 z-40 bg-nav text-nav-foreground">
-      <div className="page-grid h-12 items-center">
+    <header className="relative z-40 bg-background text-foreground">
+      <div className="page-grid h-16 items-center md:h-20">
         <Link
           href="/"
           aria-label="Stealth.design home"
-          className="col-span-2 flex items-center md:col-span-4"
+          className="col-span-2 flex items-center hover:opacity-70 md:col-span-4"
         >
-          <Wordmark height={20} />
+          <Wordmark height={22} />
         </Link>
 
         {SHOW_NAV ? (
@@ -75,27 +60,10 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
-        ) : (
-          <nav className="col-span-1 md:col-span-4" aria-label="Sections">
-            <Link
-              href="/screens"
-              aria-current={isActive("/screens") ? "page" : undefined}
-              className={cn(
-                "t-nav relative w-fit transition-opacity hover:opacity-70",
-                // The page you are on is underlined, not dimmed: one link has
-                // nothing to be dimmed against.
-                isActive("/screens") &&
-                  "underline decoration-1 underline-offset-[6px]",
-              )}
-            >
-              Screens
-            </Link>
-          </nav>
-        )}
+        ) : null}
 
-        <div className="col-span-1 flex items-center justify-end gap-1.5 md:col-span-4">
-          <ThemeToggle className="text-nav-foreground hover:bg-white/10 hover:text-nav-foreground aria-expanded:bg-white/10 aria-expanded:text-nav-foreground dark:hover:bg-white/10" />
-          {SHOW_NAV ? (
+        {SHOW_NAV ? (
+          <div className="col-span-1 flex items-center justify-end md:col-span-4">
             <Sheet>
               <SheetTrigger asChild>
                 <button
@@ -128,23 +96,8 @@ export function SiteHeader() {
                 </nav>
               </SheetContent>
             </Sheet>
-          ) : null}
-        </div>
-      </div>
-
-      {/* The notches: drawn below the bar, pointing down at the columns. */}
-      <div
-        aria-hidden
-        className="page-grid pointer-events-none absolute inset-x-0 top-full"
-      >
-        {NOTCHES.map((placement) => (
-          <span
-            key={placement}
-            className={cn("col-span-1 row-start-1", placement)}
-          >
-            <span className="ml-3 block size-0 border-x-[9px] border-t-[9px] border-x-transparent border-t-nav" />
-          </span>
-        ))}
+          </div>
+        ) : null}
       </div>
     </header>
   );

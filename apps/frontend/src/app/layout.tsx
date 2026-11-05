@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     template: "%s | Stealth.design",
   },
   description:
-    "The best first impressions on the web, from real companies. Find ideas, then visit the real site.",
+    "The best first impressions on the web. Find ideas, then visit the real site.",
   applicationName: "Stealth.design",
   // Deliberate for this build. See `robots.ts` for the reasoning.
   robots: { index: false, follow: false },
@@ -50,7 +50,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(grotesk.variable, mono.variable)}
+      className={cn("dark", grotesk.variable, mono.variable)}
     >
       <body className="min-h-dvh" suppressHydrationWarning>
         <Providers>

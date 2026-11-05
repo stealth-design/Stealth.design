@@ -28,6 +28,17 @@ export function SiteFooter() {
           <p className="t-lead mt-6 text-balance">
             The best first impressions on the web.
           </p>
+          <p className="mt-4 text-[15px] font-light">
+            Curated by{" "}
+            <a
+              href={process.env.STUDIO_STEALTH_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-nav underline-offset-4 hover:underline"
+            >
+              Studio Stealth
+            </a>
+          </p>
         </div>
 
         {SHOW_NAV ? (
@@ -51,7 +62,7 @@ export function SiteFooter() {
         <div className="col-span-full space-y-4 text-[15px] leading-relaxed font-light opacity-70 md:col-span-4 md:col-start-9">
           <p className="t-label mb-2 opacity-70">About</p>
           <p>
-            Every website shown here belongs to the company that made it. Names,
+            Every website shown here belongs to the people who made it. Names,
             logos and screenshots belong to their owners.
           </p>
         </div>

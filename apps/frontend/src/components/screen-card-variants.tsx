@@ -4,6 +4,7 @@ import type { PublicContentSummary } from "@uxd/api/client";
 import { Shot, SiteLogo } from "@/components/gallery";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card";
+import { itemPath, websitePath } from "@/lib/paths";
 import { cn } from "@/lib/utils";
 
 /**
@@ -28,7 +29,7 @@ const REVEAL =
 
 function parts(item: PublicContentSummary) {
   return {
-    href: item.kind === "flow" ? `/flow/${item.slug}` : `/entry/${item.slug}`,
+    href: itemPath(item),
     source: item.source,
     name: item.source?.name ?? item.title,
     website: item.source?.websiteUrl ?? null,
@@ -85,7 +86,7 @@ export function ScreenCardA({
           <CardTitle className="truncate">
             {source ? (
               <Link
-                href={`/sources/${source.slug}`}
+                href={websitePath(source.slug)}
                 className="hover:underline hover:underline-offset-4"
               >
                 {name}
@@ -172,7 +173,7 @@ export function ScreenCardC({
         <p className="min-w-0 flex-1 truncate text-sm font-medium">
           {source ? (
             <Link
-              href={`/sources/${source.slug}`}
+              href={websitePath(source.slug)}
               className="hover:underline hover:underline-offset-4"
             >
               {name}
